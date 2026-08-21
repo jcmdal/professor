@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lagamar Investiga — Laboratório de Investigação Digital</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+
+<!-- =========================== TELA INICIAL =========================== -->
+<section class="hero" id="hero">
+  <div class="hero-card">
+    <span class="hero-eyebrow">Estudo de Meio · Lagamar Paulista · 27–29 mai 2026</span>
+    <h1>Lagamar Investiga<br /><em>Laboratório de Investigação Digital</em></h1>
+    <p class="hero-question">"Como podemos investigar as relações entre trabalho, território e cotidiano no contexto do estudo de meio?"</p>
+    <p class="hero-desc">
+      Este não é um painel de respostas. É um espaço para observar dados reais de campo,
+      comparar locais, registrar evidências e construir, em grupo, sua própria hipótese
+      sobre o Mundo do Trabalho no Lagamar Paulista.
+    </p>
+    <div class="hero-actions">
+      <button class="btn-primary" id="btn-start">Começar investigação →</button>
+      <button class="btn-secondary" id="btn-continue" style="display:none;">Continuar rascunho salvo</button>
+      <button class="btn-secondary" id="btn-teacher-mode">Modo professor</button>
+    </div>
+    <div class="hero-footnote">
+      <span>7º ano · Projetos, Geografia, Ciências, História e Matemática</span>
+      <span>Funciona offline após o primeiro carregamento</span>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== APP SHELL =========================== -->
+<div class="app-shell" id="app-shell">
+
+  <div class="teacher-banner" id="teacher-banner" style="display:none;">
+    <span>👁️ <strong>Modo professor</strong> ativo — procedência dos dados visível, edição de base habilitada.</span>
+    <button class="icon-btn" id="btn-exit-teacher" style="margin-left:auto;">Sair do modo professor</button>
+  </div>
+
+  <header class="topbar">
+    <span class="topbar-brand">🌿 Lagamar Investiga</span>
+    <div class="topbar-meta" id="topbar-meta">
+      <span>Grupo: <strong id="meta-group">—</strong></span>
+      <span>Rodada: <strong id="meta-round">—</strong></span>
+      <span>Atividade: <strong id="meta-activity">—</strong></span>
+    </div>
+    <div class="topbar-actions">
+      <div class="mode-toggle" role="group" aria-label="Alternar modo">
+        <button id="toggle-student" class="active" type="button">Estudante</button>
+        <button id="toggle-teacher" type="button">Professor</button>
+      </div>
+      <button class="icon-btn" id="btn-open-evidence" type="button">📒 Evidências (<span id="evidence-count">0</span>)</button>
+      <button class="icon-btn" id="btn-save-draft" type="button">💾 Salvar rascunho</button>
+    </div>
+  </header>
+
+  <nav class="progress-rail" id="progress-rail" aria-label="Etapas da investigação"></nav>
+
+  <main class="main-layout" id="main-content">
+
+    <!-- ETAPA 1: Identificação -->
+    <section class="step-panel" data-step="1">
+      <div class="step-header">
+        <span class="step-kicker">Etapa 1 de 9</span>
+        <h2>Identificação</h2>
+        <p>Registre o grupo, a rodada de análise e a atividade do Caderno de Campo que vocês vão investigar hoje.</p>
+      </div>
+      <div class="card">
+        <h3>Ficha contextualizada</h3>
+        <p class="card-sub">Bloco 1 da Ficha Técnica — Triagem e Memória de Campo.</p>
+        <div class="field-row">
+          <div class="field">
+            <label for="f-groupName">Nome do grupo</label>
+            <input type="text" id="f-groupName" placeholder="Ex.: Grupo Manguezal" />
+          </div>
+          <div class="field">
+            <label for="f-analysisRound">Rodada de Análise atual</label>
+            <select id="f-analysisRound">
+              <option value="">Selecione</option>
+              <option value="1">Rodada 1 — Atividades 1, 3 e 9</option>
+              <option value="2">Rodada 2 — Atividades 4, 7 e 8</option>
+              <option value="3">Rodada 3 — Atividades 2, 5 e 6</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="f-activityNumber">Número da Atividade no Caderno de Campo</label>
+            <select id="f-activityNumber"><option value="">Selecione</option></select>
+          </div>
+          <div class="field">
+            <label for="f-activityName">Nome da Atividade</label>
+            <input type="text" id="f-activityName" readonly placeholder="Preenchido automaticamente" />
+          </div>
+        </div>
+        <p class="hint">A lista de atividades e o agrupamento por rodada seguem o cronograma oficial do estudo de meio. <span class="badge badge-caderno">caderno</span></p>
+      </div>
+    </section>
+
+    <!-- ETAPA 2: Memória de campo -->
+    <section class="step-panel" data-step="2">
+      <div class="step-header">
+        <span class="step-kicker">Etapa 2 de 9</span>
+        <h2>Memória de campo</h2>
+        <p>Onde vocês estavam, como o grupo se organizou e o que trouxeram de volta para analisar.</p>
+      </div>
+      <div class="card">
+        <div class="field">
+          <label for="f-scenario">O Cenário — onde vocês estavam exatamente durante a coleta?</label>
+          <textarea id="f-scenario" placeholder="Ex.: no manguezal de Iguape, sob a Ponte Prefeito Laércio Ribeiro..."></textarea>
+        </div>
+        <div class="field">
+          <label for="f-taskDivision">Divisão de Tarefas no Campo</label>
+          <textarea id="f-taskDivision" placeholder="Quem coordenou, quem fotografou, quem anotou..."></textarea>
+        </div>
+        <div class="field">
+          <label>Inventário de Material disponível</label>
+          <div class="checklist" id="materials-checklist">
+            <label><input type="checkbox" value="Textos e anotações escritas no caderno" /> Textos e anotações escritas no caderno</label>
+            <label><input type="checkbox" value="Fotografias" /> Fotografias</label>
+            <label><input type="checkbox" value="Vídeos ou gravações de áudio" /> Vídeos ou gravações de áudio</label>
+            <label><input type="checkbox" value="Tabelas, contagens ou mapas preenchidos" /> Tabelas, contagens ou mapas preenchidos</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Os arquivos já estão salvos e acessíveis para o grupo usar agora?</label>
+          <div class="radio-row">
+            <label><input type="radio" name="materialsAccessible" value="sim" /> Sim</label>
+            <label><input type="radio" name="materialsAccessible" value="nao" /> Não — resolver antes de avançar</label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ETAPA 3: Passando a limpo -->
+    <section class="step-panel" data-step="3">
+      <div class="step-header">
+        <span class="step-kicker">Etapa 3 de 9</span>
+        <h2>Passando a limpo</h2>
+        <p>Digite, cole ou organize os dados brutos coletados em campo.</p>
+      </div>
+      <div class="card">
+        <div class="warning-box">Organize o que foi observado sem transformar uma interpretação em dado.</div>
+        <div class="field">
+          <label for="f-rawData">Dados organizados (tabela, observações, citações de entrevistas, pontos de coleta, esquemas)</label>
+          <textarea id="f-rawData" style="min-height:160px;" placeholder="Cole aqui os dados brutos do Caderno de Campo..."></textarea>
+        </div>
+        <h3 style="margin-top:22px;">Tabela editável</h3>
+        <p class="card-sub">Adicione linhas com os registros do grupo. Colunas configuráveis.</p>
+        <div id="editable-table-wrap"></div>
+        <button class="btn-secondary" id="btn-add-row" type="button" style="margin-top:10px;">+ Adicionar linha</button>
+      </div>
+    </section>
+
+    <!-- ETAPA 4: Laboratório de dados (4 painéis) -->
+    <section class="step-panel" data-step="4">
+      <div class="step-header">
+        <span class="step-kicker">Etapa 4 de 9</span>
+        <h2>Laboratório de dados</h2>
+        <p>Explore os quatro painéis investigativos. Compare estações, locais e ecossistemas. Adicione evidências ao Caderno enquanto investiga.</p>
+      </div>
+      <div class="panel-tabs" role="tablist" aria-label="Painéis investigativos">
+        <button class="panel-tab active" data-panel="fisico-sonoro" type="button">1 · Espectro físico e sonoro</button>
+        <button class="panel-tab" data-panel="hidrodinamica" type="button">2 · Hidrodinâmica e vida</button>
+        <button class="panel-tab" data-panel="ecossistemas" type="button">3 · Ecossistemas costeiros</button>
+        <button class="panel-tab" data-panel="trabalho" type="button">4 · Mundo do Trabalho</button>
+      </div>
+      <div id="panel-content"></div>
+    </section>
+
+    <!-- ETAPA 5: Balcão dos especialistas -->
+    <section class="step-panel" data-step="5">
+      <div class="step-header">
+        <span class="step-kicker">Etapa 5 de 9</span>
+        <h2>Perguntas dos especialistas</h2>
+        <p>Registrem até três dúvidas técnicas antes de conversar com o professor ou especialista convidado.</p>
+      </div>
+      <div class="card">
+        <div class="field">
+          <label for="f-question1">Dúvida técnica 1</label>
+          <input type="text" id="f-question1" placeholder="Ex.: Que variável precisamos comparar?" />
+          <p class="hint">Sugestões: "Que variável precisamos comparar?" · "Qual unidade aparece no dado?" · "O que ainda não é possível concluir?"</p>
+        </div>
+        <div class="field">
+          <label for="f-question2">Dúvida técnica 2</label>
+          <input type="text" id="f-question2" />
+        </div>
+        <div class="field">
+          <label for="f-question3">Dúvida técnica 3</label>
+          <input type="text" id="f-question3" />
+        </div>
+        <div class="field">
+          <label for="f-consultancyNotes">Anotações da Consultoria (o que o especialista explicou)</label>
+          <textarea id="f-consultancyNotes" placeholder="Não simule respostas de especialistas que não foram fornecidas."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- ETAPA 6: Lupa analítica -->
+    <section class="step-panel" data-step="6">
+      <div class="step-header">
+        <span class="step-kicker">Etapa 6 de 9</span>
+        <h2>Lupa analítica</h2>
+        <p>Compare dados, identifique padrões e formule sua hipótese com evidências a favor e contra.</p>
+      </div>
+      <div class="card">
+        <div class="microcopy">Observe antes de explicar.</div>
+        <div class="field"><label for="f-patterns">Padrões e destaques</label><textarea id="f-patterns"></textarea></div>
+        <div class="field"><label for="f-observations">Observações diretamente visíveis nos dados</label><textarea id="f-observations"></textarea></div>
+      </div>
+      <div class="card">
+        <div class="microcopy">Compare dois locais antes de escrever sua hipótese.</div>
+        <div class="field"><label for="f-hypothesis">Hipótese provisória</label><textarea id="f-hypothesis"></textarea></div>
+        <div class="field-row">
+          <div class="field"><label for="f-supportingEvidence">Evidências que apoiam a hipótese</label><textarea id="f-supportingEvidence"></textarea></div>
+          <div class="field"><label for="f-limitingEvidence">Evidências que limitam ou não confirmam</label><textarea id="f-limitingEvidence"></textarea></div>
+        </div>
+        <div class="field"><label for="f-analyticalLimits">Limites da análise — o que o dado ainda não permite afirmar?</label><textarea id="f-analyticalLimits"></textarea></div>
+      </div>
+    </section>
+
+    <!-- ETAPA 7: Ponte com o trabalho -->
+    <section class="step-panel" data-step="7">
+      <div class="step-header">
+        <span class="step-kicker">Etapa 7 de 9</span>
+        <h2>Ponte com o trabalho</h2>
+        <p>Relacione o achado ao Mundo do Trabalho: pessoas, atividades, território, condições de vida.</p>
+      </div>
+      <div class="card">
+        <div class="field">
+          <label for="f-workBridge">Como esses dados se relacionam com o Mundo do Trabalho?</label>
+          <textarea id="f-workBridge" style="min-height:140px;" placeholder="Pense nos trabalhadores envolvidos, nas mudanças geradas pelo trabalho na região, nas profissões ligadas ao que vocês observaram..."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- ETAPA 8: Síntese -->
+    <section class="step-panel" data-step="8">
+      <div class="step-header">
+        <span class="step-kicker">Etapa 8 de 9</span>
+        <h2>Síntese</h2>
+        <p>Escrevam a manchete do grupo e uma nova questão para continuar investigando.</p>
+      </div>
+      <div class="card">
+        <div class="field"><label for="f-headline">Grande constatação — manchete em uma frase</label><input type="text" id="f-headline" /></div>
+        <div class="field"><label for="f-newQuestion">Nova questão motivadora</label><textarea id="f-newQuestion"></textarea></div>
+        <div class="field"><label for="f-nextStep">Próximo passo ou proposta do grupo</label><textarea id="f-nextStep" placeholder="Apresentada como proposta do grupo, não como resposta validada pelo sistema."></textarea></div>
+      </div>
+    </section>
+
+    <!-- ETAPA 9: Revisão e saída -->
+    <section class="step-panel" data-step="9">
+      <div class="step-header">
+        <span class="step-kicker">Etapa 9 de 9</span>
+        <h2>Revisão e relatório</h2>
+        <p>Confira a completude da investigação e gere o Relatório de Investigação para apoiar a Ficha Técnica.</p>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <h3>Completude</h3>
+          <ul class="completeness-list" id="completeness-list"></ul>
+        </div>
+        <div class="card">
+          <h3>Ações</h3>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <button class="btn-primary" id="btn-generate-report" type="button">Gerar Relatório de Investigação</button>
+            <button class="btn-secondary" id="btn-copy-report" type="button">Copiar relatório</button>
+            <button class="btn-secondary" id="btn-export-md" type="button">Exportar (.md)</button>
+            <button class="btn-secondary" id="btn-export-json" type="button">Exportar (.json)</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Prévia do relatório</h3>
+        <div class="report-preview" id="report-preview">Clique em "Gerar Relatório" para visualizar.</div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="step-nav">
+    <button class="btn-secondary" id="btn-prev-step" type="button">← Voltar</button>
+    <span class="save-indicator" id="save-indicator">Rascunho salvo automaticamente</span>
+    <button class="btn-primary" id="btn-next-step" type="button">Avançar →</button>
+  </div>
+</div>
+
+<!-- =========================== CADERNO DE EVIDÊNCIAS =========================== -->
+<aside class="evidence-drawer" id="evidence-drawer" aria-label="Caderno de Evidências">
+  <div class="drawer-header">
+    <h3>📒 Caderno de Evidências</h3>
+    <button class="icon-btn" id="btn-close-evidence" type="button">Fechar ✕</button>
+  </div>
+  <div class="drawer-body" id="evidence-list">
+    <p class="hint">Nenhuma evidência registrada ainda. Ao explorar os painéis, clique em "Adicionar evidência" para guardar aqui uma observação, um dado ou uma comparação — sempre com sua própria interpretação.</p>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script src="data/lagamarData.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
