@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Painel do Professor — Lagamar Investiga</title>
+<link rel="stylesheet" href="css/base.css" />
+<link rel="stylesheet" href="css/professor.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- =========================== TELA DE SENHA =========================== -->
+<section class="hero" id="password-gate">
+  <div class="hero-card">
+    <span class="hero-eyebrow">Lagamar Investiga · Acesso restrito</span>
+    <h1>Painel do <em>Professor</em></h1>
+    <p class="hero-desc">
+      Esta área reúne a fila de aprovação de relatórios e a comparação entre
+      grupos que investigaram a mesma atividade. Digite a senha combinada
+      com a coordenação para continuar.
+    </p>
+    <div class="field" style="max-width:320px;">
+      <label for="teacher-password">Senha</label>
+      <input type="password" id="teacher-password" placeholder="••••••••••" autocomplete="off" />
+    </div>
+    <div class="hero-actions">
+      <button class="btn-primary" id="btn-enter-teacher">Entrar →</button>
+    </div>
+    <p class="hint" id="password-error" style="color:var(--alerta); display:none; margin-top:10px;">Senha incorreta. Tente novamente.</p>
+  </div>
+</section>
+
+<!-- =========================== PAINEL PRINCIPAL =========================== -->
+<div class="teacher-shell" id="teacher-shell" style="display:none;">
+
+  <aside class="teacher-sidebar">
+    <div class="brand">🌿 Lagamar Investiga</div>
+    <div class="brand-sub">Painel do Professor</div>
+
+    <button class="teacher-nav-item active" data-view="overview" type="button">
+      📊 Visão geral
+    </button>
+    <button class="teacher-nav-item" data-view="approvals" type="button">
+      🗂️ Fila de aprovação
+      <span class="count-pill zero" id="nav-pending-count">0</span>
+    </button>
+    <button class="teacher-nav-item" data-view="compare" type="button">
+      🔍 Comparar grupos
+    </button>
+
+    <div class="sidebar-footer">
+      <button class="teacher-nav-item" id="btn-exit-teacher-panel" type="button">← Voltar ao início</button>
+    </div>
+  </aside>
+
+  <main class="teacher-main">
+
+    <!-- VISÃO GERAL -->
+    <section id="view-overview" class="teacher-view">
+      <div class="teacher-header">
+        <div>
+          <h1>Visão geral</h1>
+          <p>Panorama de todas as investigações em andamento nas turmas 7º A e 7º B.</p>
+        </div>
+      </div>
+      <div class="stat-grid" id="stat-grid">
+        <div class="loading-state">Carregando estatísticas…</div>
+      </div>
+      <div class="teacher-table-wrap">
+        <table class="teacher-table" id="overview-table">
+          <thead>
+            <tr>
+              <th>Grupo</th>
+              <th>Rodada / Atividade</th>
+              <th>Manchete</th>
+              <th>Status</th>
+              <th>Atualizado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="overview-table-body">
+            <tr><td colspan="6" class="loading-state">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FILA DE APROVAÇÃO -->
+    <section id="view-approvals" class="teacher-view" style="display:none;">
+      <div class="teacher-header">
+        <div>
+          <h1>Fila de aprovação</h1>
+          <p>Relatórios enviados pelos grupos, aguardando revisão. Aprove ou peça ajustes com um comentário.</p>
+        </div>
+      </div>
+      <div id="approvals-content">
+        <div class="loading-state">Carregando fila…</div>
+      </div>
+    </section>
+
+    <!-- COMPARAR GRUPOS -->
+    <section id="view-compare" class="teacher-view" style="display:none;">
+      <div class="teacher-header">
+        <div>
+          <h1>Comparar grupos</h1>
+          <p>Veja lado a lado o que cada grupo registrou para a mesma rodada e atividade — útil para identificar padrões, divergências e grupos que precisam de apoio.</p>
+        </div>
+      </div>
+      <div class="comparison-toolbar">
+        <div class="field" style="margin:0;">
+          <label for="compare-class">Turma</label>
+          <select id="compare-class">
+            <option value="">Todas as turmas</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0;">
+          <label for="compare-round">Rodada</label>
+          <select id="compare-round">
+            <option value="">Selecione a rodada</option>
+            <option value="1">Rodada 1</option>
+            <option value="2">Rodada 2</option>
+            <option value="3">Rodada 3</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0;">
+          <label for="compare-activity">Atividade</label>
+          <select id="compare-activity">
+            <option value="">Selecione a atividade</option>
+          </select>
+        </div>
+        <button class="btn-primary" id="btn-run-comparison" type="button">Comparar</button>
+      </div>
+      <div id="comparison-content">
+        <div class="teacher-empty">
+          <span class="emoji">🔍</span>
+          Selecione uma rodada e uma atividade para comparar os grupos que investigaram o mesmo tema.
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Modal de revisão detalhada de um relatório -->
+<div class="teacher-modal-backdrop" id="review-modal-backdrop" style="display:none;">
+  <div class="teacher-modal" id="review-modal-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="data/lagamarData.js"></script>
+<script src="js/supabaseClient.js"></script>
+<script src="js/api/classesGroups.js"></script>
+<script src="js/api/investigations.js"></script>
+<script src="js/api/dataPoints.js"></script>
+<script src="js/api/submissions.js"></script>
+<script src="js/professor.js"></script>
+</body>
+</html>
