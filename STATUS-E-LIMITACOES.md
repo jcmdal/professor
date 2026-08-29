@@ -1,69 +1,108 @@
 # Lagamar Investiga v2 — Status da Implementação
 
-**Este é um entregável PARCIAL.** Você pediu 3 funcionalidades em ordem de prioridade — este pacote entrega a **#1 completa** (Painel do Professor + Comparação entre Grupos) e o **motor da #2 pronto** (import de PDF/DOCX), mas ainda não integrado à tela do aluno. A **#3** (estrutura de turmas/grupos como acesso do aluno) tem o banco pronto, mas falta a tela de seleção.
-
----
-
-## ✅ O que está pronto e funcional
+## O que está pronto e testado
 
 ### 1. Banco de dados (Supabase)
-- Projeto `lagamar-investiga` criado (região São Paulo, plano gratuito)
-- Schema completo: `classes`, `groups`, `investigations`, `data_points` (com a separação **quantitativo × qualitativo** que a coordenação pediu), `table_rows`, `evidence_log`, `submissions`, `location_photos`
-- Turmas e grupos já cadastrados: **7º A com 7 grupos**, **7º B com 6 grupos**, cada um com um código de acesso próprio
-- Política de acesso configurada como você escolheu: aberta (sem login de aluno), com a senha do professor (`admin@elvira`) continuando como barreira só de interface — mesmo modelo do protótipo anterior
-- Sem alertas de segurança pendentes (verificado via advisor automático do Supabase)
+Projeto `lagamar-investiga` criado (região São Paulo, plano gratuito), schema completo:
+`classes`, `groups`, `investigations`, `data_points` (separação quantitativo × qualitativo),
+`table_rows`, `evidence_log`, `submissions`, `location_photos`. Turmas e grupos já cadastrados:
+**7º A com 7 grupos**, **7º B com 6 grupos**. RLS aberto (sem login de aluno), conforme decisão
+já tomada. Sem alertas de segurança pendentes.
 
-### 2. Painel do Professor (`professor.html`) — PRONTO
-Três seções, acessíveis por uma barra lateral (visual bem distinto da experiência do aluno, como pedido):
+### 2. Tela do aluno (`index.html`) — migrada para Supabase
+- **Seleção de acesso por clique**: turma → grupo, sem digitar nome. Sessão leve salva no
+  navegador para retomar sem escolher de novo ("Continuando como Grupo X — trocar de grupo").
+- Toda a jornada de 9 etapas migrada de `localStorage` para o banco: cada campo salva
+  automaticamente (debounce de 600ms) em `investigations`; tabela editável e Caderno de
+  Evidências persistem em `table_rows`/`evidence_log` com IDs reais do banco.
+- **Import de Ficha Técnica (PDF/DOCX)** conectado na Etapa 1: upload → extração de texto →
+  aplica automaticamente só os campos de alta confiança, sinalizando claramente o que precisa
+  de revisão manual. Nunca inventa valor para campo não encontrado.
+- Fluxo de aprovação sincronizado com o professor em tempo real (polling a cada 30s quando o
+  aluno está na Etapa 9), sem depender do mesmo computador.
 
-- **Visão geral**: cartões de estatística (total, aguardando aprovação, aprovadas, em revisão, rascunhos) + tabela com todas as investigações de todos os grupos, com botão para ver detalhe de cada uma.
-- **Fila de aprovação**: mesma lógica do protótipo anterior (aprovar / solicitar revisão com comentário obrigatório), agora lendo do banco compartilhado — ou seja, **funciona mesmo que cada grupo esteja em um computador diferente do professor**, o que resolve a limitação que o protótipo anterior tinha com o `localStorage`.
-- **Comparar grupos**: você seleciona turma (opcional) + rodada + atividade, e a ferramenta monta uma grade lado a lado com todos os grupos que investigaram aquele tema — cenário, hipótese, evidências a favor/contra, ponte com o trabalho, manchete e nova questão. Campos não preenchidos aparecem claramente marcados como "Não preenchido", nunca inventados.
+### 3. Painel do Professor (`professor.html`) — corrigido nesta rodada
+- Três seções: Visão Geral, Fila de Aprovação, Comparar Grupos.
+- **Correção aplicada**: o contador de pendências no menu lateral só atualizava ao passar pela
+  Visão Geral primeiro; agora atualiza corretamente também ao entrar direto na Fila de Aprovação.
 
-### 3. Motor de importação de Ficha Técnica em PDF/DOCX — PRONTO (motor), PENDENTE (tela)
-- Testei a extração de texto contra o PDF real da Ficha Técnica oficial e mapeei os rótulos exatos do documento
-- **Encontrei e corrigi um bug real durante o desenvolvimento**: a primeira versão do parser capturava a *pergunta* do formulário (ex: "O Cenário: Onde nós estávamos exatamente...") em vez da *resposta* do aluno. Corrigi distinguindo campos de resposta direta dos campos em que a resposta só aparece depois de um "R:" no documento.
-- O parser nunca inventa valor para campo vazio ou ilegível — sempre marca como "não encontrado" e deixa para revisão manual.
-- **O que falta**: uma tela/botão na interface do aluno para de fato fazer o upload e ver os campos pré-preenchidos antes de confirmar. O motor (`js/import/fichaTecnicaImport.js`) está pronto para ser plugado nisso.
+### 4. Ambos os HTMLs são autocontidos
+Todo CSS e JavaScript local está embutido inline em cada arquivo — só dependem de bibliotecas
+externas via CDN (Supabase, e no caso do aluno também pdf.js/mammoth.js para o import). Isso
+evita o problema já visto antes (arquivo funcionando errado por perda da estrutura de pastas).
 
 ---
 
-## ⚠️ Importante: limitação de teste que encontrei (e como contornei)
+## Bugs reais encontrados e corrigidos nesta sessão
 
-O ambiente onde eu desenvolvo não tem acesso de rede a domínios externos como `supabase.co` ou CDNs (`cdnjs.cloudflare.com`, `jsdelivr.net`, `unpkg.com`) — nem via terminal, nem via navegador de teste. Isso significa que **não consegui testar esta v2 de ponta a ponta contra o banco real ou com as bibliotecas de PDF/DOCX carregadas de verdade**, ao contrário da v1 (que era 100% local e eu conseguia testar tudo com Puppeteer).
+Ao testar o fluxo completo (não só abrir a tela, mas realmente preencher, enviar, aprovar),
+encontrei e corrigi três bugs que só apareceriam em uso real:
 
-Para compensar isso com o máximo de rigor possível, eu:
-1. Testei toda a lógica de UI do painel do professor com um **simulador (mock) do banco**, usando os mesmos dados e a mesma estrutura de colunas do banco real — 15 verificações automatizadas, todas passando.
-2. Conferi **cada nome de coluna e cada relação de junção** usada no código contra o schema real do banco, via consulta direta — nenhuma divergência encontrada.
-3. Testei a lógica pura do parser de PDF (sem a biblioteca de leitura em si, que roda só no navegador) com um arquivo de teste simulando uma ficha preenchida — inclusive um teste que só passou depois que corrigi o bug mencionado acima.
-4. Revisei manualmente a sintaxe de configuração do `pdf.js` (worker) contra a documentação, e adicionei tratamento de erro claro caso as bibliotecas externas não carreguem.
+1. **Envio para aprovação não atualizava o status.** A função que envia o relatório virou
+   assíncrona ao migrar para o Supabase, mas o código que a chamava continuava tratando-a como
+   síncrona — o clique "funcionava" mas o status na tela nunca mudava. Corrigido em dois pontos
+   (`submitForApproval` e `renderSubmissionPanel`).
+2. **Status desatualizado ao voltar para a Etapa 9.** A sincronização com o banco só acontecia
+   dentro da própria renderização do painel, então navegar para outra etapa e voltar não pegava
+   decisões do professor tomadas nesse meio-tempo. Corrigido: a navegação agora sincroniza
+   explicitamente antes de renderizar.
+3. **Contador de pendências no professor ficava zerado incorretamente** se o professor fosse
+   direto para a Fila de Aprovação sem passar pela Visão Geral primeiro.
 
-**O que isso significa na prática para você:** o código está sólido e consistente com o banco, mas a primeira vez que você abrir o `professor.html` com internet de verdade é o primeiro teste "de verdade" contra o Supabase ao vivo. Recomendo testar com os 3 grupos de exemplo que já deixei cadastrados (veja abaixo) antes de usar com a turma real.
+Todos os três foram encontrados rodando o fluxo de ponta a ponta com testes automatizados
+(Puppeteer + um simulador do banco), não apenas inspecionando o código.
+
+---
+
+## Sobre os testes realizados
+
+Meu ambiente de desenvolvimento não tem acesso de rede a domínios externos (nem ao Supabase
+real, nem aos CDNs de bibliotecas). Para testar mesmo assim com rigor, usei um **simulador do
+banco de dados** que imita a mesma interface do Supabase real, com os mesmos nomes de tabela e
+coluna — e confirmei que essa interface bate exatamente com o schema real (conferido via
+consulta direta ao banco).
+
+Com esse simulador, testei:
+- O fluxo do aluno sozinho, do início ao fim, em todas as 9 etapas e os 4 painéis.
+- O fluxo do professor sozinho: visão geral, fila de aprovação, comparação entre grupos.
+- **O fluxo completo entre os dois papéis**: aluno preenche e envia → professor vê a pendência,
+  aprova com comentário → aluno vê o status atualizado, o comentário e o PDF liberado — usando
+  duas abas do navegador compartilhando o mesmo "banco" simulado (persistido em localStorage
+  entre as abas, do mesmo jeito que o Supabase real fica consistente entre sessões).
+- O comportamento de fallback quando as bibliotecas de PDF/DOCX ou o Supabase não carregam:
+  a aplicação mostra uma mensagem clara em vez de travar.
+
+**O que isso não cobre:** a primeira vez que você abrir isso com o Supabase real e as
+bibliotecas de PDF/DOCX carregando de verdade via internet é, na prática, o primeiro teste
+verdadeiramente completo do sistema. Recomendo testar com os grupos já cadastrados no banco
+antes de usar com a turma real — veja "Como testar agora" abaixo.
 
 ---
 
 ## Como testar agora
 
-1. Abra `professor.html` em um navegador com internet.
-2. Senha: `admin@elvira`
-3. Você vai ver 3 investigações de teste já carregadas (Grupo 1, 2 e 3 da 7ºA, todos na Atividade 8 — Ecossistemas Florestais):
-   - Grupo 1: aguardando aprovação
-   - Grupo 2: já aprovado, com comentário
-   - Grupo 3: ainda em rascunho (dados incompletos, de propósito, para testar como a comparação lida com campos vazios)
-4. Teste a Fila de Aprovação (aprove ou peça revisão no Grupo 1).
-5. Teste Comparar Grupos: selecione Rodada 2 + Atividade 8 e clique em Comparar.
-
-**Antes de usar com a turma de verdade**, me avise para eu apagar esses 3 registros de teste do banco (ou posso fazer isso automaticamente na próxima etapa).
+1. Abra `index.html` (aluno) em uma aba e `professor.html` em outra, ambos com internet.
+2. Na aba do aluno: escolha 7º A → Grupo 1, preencha a Etapa 1 em diante, gere o relatório na
+   Etapa 9 e clique em "Enviar para aprovação do professor".
+3. Na aba do professor: senha `admin@elvira`, entre em "Fila de aprovação" e confirme que o
+   envio aparece. Aprove com um comentário.
+4. Volte para a aba do aluno, navegue para outra etapa e volte para a Etapa 9 (ou espere até
+   30s) — o status deve mudar para "Aprovado" com o comentário visível, e o botão de PDF deve
+   liberar.
 
 ---
 
-## O que ainda falta (próximos passos)
+## O que ainda falta (da lista original da reunião)
 
-Seguindo sua ordem de prioridade, o que falta implementar:
+Pela ordem de prioridade que você definiu (visão do professor + comparação → import de PDF →
+estrutura de turmas/Supabase), os três primeiros itens estão prontos. Ainda faltam da lista
+completa da reunião:
 
-1. **Conectar o import de PDF/DOCX à tela do aluno** — criar a tela de upload + pré-visualização dos campos extraídos + confirmação, usando o motor já pronto.
-2. **Reescrever a tela do aluno (`index.html`) para usar Supabase** em vez de `localStorage` — atualmente a v1 ainda é 100% local; a v2 só tem o painel do professor.
-3. **Tela inicial de seleção turma → grupo** (os cards de acesso que você pediu, usando os `access_code` já cadastrados no banco).
-4. Pontos que ainda não comecei: fotos reais dos locais, exportar/reimportar rascunho em PDF, UI mais interativa voltada ao estudante.
-
-Quer que eu continue por essa ordem, começando pela tela do aluno em Supabase (para o import de PDF ter onde "morar")?
+- **Fotos reais dos locais** por painel/estação (a tabela `location_photos` e o bucket de
+  Storage já existem no banco, prontos para receber isso).
+- **Exportar rascunho em PDF** (hoje só o relatório aprovado gera PDF; a reunião pediu também
+  poder salvar o rascunho em qualquer ponto do preenchimento) e a funcionalidade de reimportar
+  esse PDF para autopreencher — isso pode reaproveitar o mesmo motor de import de Ficha Técnica
+  já construído, com ajustes.
+- **UI mais interativa/imersiva** focada no UX dos estudantes — o visual atual é sóbrio e
+  funcional, mas a reunião pediu uma "roupagem" mais lúdica.
