@@ -4,42 +4,853 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Lagamar Investiga — Laboratório de Investigação Digital</title>
-<link rel="stylesheet" href="style.css" />
+<style>
+/* =========================================================================
+   LAGAMAR INVESTIGA — Laboratório de Investigação Digital
+   Identidade: caderno de campo científico do estuário.
+   Paleta: lodo do manguezal, água salobra, areia de restinga, verde de mata.
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,500&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* --- paleta nomeada --- */
+  --lodo: #2f2a22;          /* lodo escuro do manguezal — texto principal */
+  --agua-salobra: #3d5a52;  /* verde-água do estuário — primária */
+  --agua-salobra-forte: #24413b;
+  --areia: #ede4d3;         /* areia da restinga — fundo */
+  --areia-clara: #f7f2e7;
+  --ferrugem: #b5652f;      /* raiz de mangue / ferrugem — acento quente */
+  --junco: #7a8c4f;         /* verde junco — sucesso / campo confirmado */
+  --alerta: #9c4a3c;        /* alerta suave — dado ausente */
+  --linha: #cbbfa4;         /* linhas divisórias */
+  --papel-selo: #e4d9be;
+
+  --font-display: 'Source Serif 4', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  --radius: 3px;
+  --shadow-card: 0 1px 0 rgba(47,42,34,0.08), 0 1px 3px rgba(47,42,34,0.06);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--areia);
+  color: var(--lodo);
+  line-height: 1.5;
+  background-image:
+    linear-gradient(180deg, var(--areia-clara) 0%, var(--areia) 400px);
+}
+
+img { max-width: 100%; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Foco visível para acessibilidade em toda a aplicação */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--ferrugem);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------- */
+/* Tela inicial                                                         */
+/* ------------------------------------------------------------------- */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% 15%, rgba(122,140,79,0.14), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 90% 85%, rgba(181,101,47,0.10), transparent 60%);
+  pointer-events: none;
+}
+
+.hero-card {
+  max-width: 760px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--agua-salobra-forte);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.hero-eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: var(--ferrugem);
+  display: inline-block;
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.1rem, 5vw, 3.4rem);
+  line-height: 1.08;
+  margin: 0 0 22px;
+  color: var(--lodo);
+}
+
+.hero h1 em {
+  font-style: italic;
+  color: var(--agua-salobra-forte);
+}
+
+.hero-question {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.25rem;
+  color: var(--agua-salobra-forte);
+  border-left: 3px solid var(--ferrugem);
+  padding: 4px 0 4px 20px;
+  margin: 0 0 28px;
+}
+
+.hero-desc {
+  font-size: 1.02rem;
+  color: #4a4436;
+  max-width: 58ch;
+  margin-bottom: 34px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn-primary {
+  background: var(--agua-salobra-forte);
+  color: var(--areia-clara);
+  border: none;
+  padding: 14px 26px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.btn-primary:hover { background: var(--agua-salobra); transform: translateY(-1px); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--agua-salobra-forte);
+  border: 1.5px solid var(--linha);
+  padding: 13px 22px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.96rem;
+}
+.btn-secondary:hover { border-color: var(--agua-salobra); background: rgba(61,90,82,0.06); }
+
+.hero-footnote {
+  margin-top: 40px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #8a8064;
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------------- */
+/* App shell                                                            */
+/* ------------------------------------------------------------------- */
+.app-shell { display: none; min-height: 100vh; }
+.app-shell.active { display: block; }
+.hero.hidden { display: none; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--areia-clara);
+  border-bottom: 1px solid var(--linha);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.topbar-brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--agua-salobra-forte);
+  white-space: nowrap;
+}
+
+.topbar-meta {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: #6b634c;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.topbar-meta span strong { color: var(--lodo); font-weight: 600; }
+
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+.mode-toggle {
+  display: inline-flex;
+  border: 1px solid var(--linha);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.mode-toggle button {
+  border: none;
+  background: transparent;
+  padding: 7px 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #6b634c;
+}
+.mode-toggle button.active {
+  background: var(--agua-salobra-forte);
+  color: white;
+}
+
+.icon-btn {
+  border: 1px solid var(--linha);
+  background: var(--areia-clara);
+  border-radius: var(--radius);
+  padding: 7px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--agua-salobra-forte);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.icon-btn:hover { background: rgba(61,90,82,0.08); }
+
+/* Progress rail */
+.progress-rail {
+  display: flex;
+  gap: 2px;
+  padding: 10px 20px;
+  background: var(--areia-clara);
+  border-bottom: 1px solid var(--linha);
+  overflow-x: auto;
+}
+.progress-step {
+  flex: 1;
+  min-width: 82px;
+  text-align: center;
+  padding: 7px 4px;
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: #8a8064;
+  border-bottom: 3px solid var(--linha);
+  cursor: pointer;
+  background: transparent;
+}
+.progress-step.done { color: var(--junco); border-bottom-color: var(--junco); }
+.progress-step.current {
+  color: var(--agua-salobra-forte);
+  border-bottom-color: var(--ferrugem);
+  font-weight: 700;
+  background: rgba(181,101,47,0.06);
+}
+
+/* Layout principal */
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 20px 100px;
+  gap: 24px;
+}
+
+.step-panel { animation: fadein 0.25s ease; }
+@keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.step-header { margin-bottom: 22px; }
+.step-kicker {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ferrugem);
+  margin-bottom: 6px;
+  display: block;
+}
+.step-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  margin: 0 0 8px;
+  color: var(--lodo);
+}
+.step-header p { color: #6b634c; max-width: 68ch; margin: 0; }
+
+/* Cards */
+.card {
+  background: var(--areia-clara);
+  border: 1px solid var(--linha);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 18px;
+}
+.card h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  margin: 0 0 4px;
+  color: var(--agua-salobra-forte);
+}
+.card .card-sub { color: #6b634c; font-size: 0.9rem; margin: 0 0 16px; }
+
+/* Formulários */
+.field { margin-bottom: 16px; }
+.field label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--lodo);
+  margin-bottom: 6px;
+}
+.field .hint { font-size: 0.8rem; color: #8a8064; margin-top: 4px; }
+
+input[type="text"], textarea, select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--linha);
+  border-radius: var(--radius);
+  background: white;
+  font-family: inherit;
+  font-size: 0.94rem;
+  color: var(--lodo);
+}
+textarea { min-height: 84px; resize: vertical; }
+input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--agua-salobra); }
+
+.checklist { display: flex; flex-direction: column; gap: 8px; }
+.checklist label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.checklist input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--agua-salobra-forte); }
+
+.radio-row { display: flex; gap: 18px; flex-wrap: wrap; }
+.radio-row label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.radio-row input { accent-color: var(--agua-salobra-forte); }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .field-row { grid-template-columns: 1fr; } }
+
+/* Provenance badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.badge-campo { background: rgba(122,140,79,0.16); color: #4c5c2c; }
+.badge-caderno { background: rgba(61,90,82,0.14); color: var(--agua-salobra-forte); }
+.badge-contexto { background: rgba(181,101,47,0.14); color: #8a4a20; }
+.badge-exemplo { background: rgba(156,74,60,0.12); color: var(--alerta); }
+.badge-ausente { background: rgba(138,128,100,0.16); color: #6b634c; }
+
+.provenance-note {
+  font-size: 0.78rem;
+  color: #8a8064;
+  font-style: italic;
+  margin-top: 6px;
+}
+
+.data-missing {
+  border: 1.5px dashed var(--linha);
+  border-radius: var(--radius);
+  padding: 14px;
+  text-align: center;
+  color: #8a8064;
+  font-size: 0.88rem;
+  background: rgba(203,191,164,0.15);
+}
+
+/* Painéis investigativos */
+.panel-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.panel-tab {
+  border: 1.5px solid var(--linha);
+  background: var(--areia-clara);
+  padding: 9px 16px;
+  border-radius: 20px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #6b634c;
+}
+.panel-tab.active {
+  background: var(--agua-salobra-forte);
+  border-color: var(--agua-salobra-forte);
+  color: white;
+}
+
+.station-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 14px; }
+.station-card {
+  border: 1.5px solid var(--linha);
+  border-radius: var(--radius);
+  padding: 16px;
+  background: white;
+}
+.station-card.selected { border-color: var(--ferrugem); box-shadow: 0 0 0 3px rgba(181,101,47,0.12); }
+.station-card h4 { margin: 0 0 10px; font-family: var(--font-display); font-size: 1.02rem; }
+.station-card .metric-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; border-bottom: 1px dashed var(--linha); font-size: 0.86rem;
+}
+.station-card .metric-row:last-child { border-bottom: none; }
+.metric-value { font-family: var(--font-mono); font-weight: 600; }
+
+/* Barras simples em SVG/CSS acessíveis */
+.bar-chart { display: flex; align-items: flex-end; gap: 18px; height: 170px; padding: 10px 6px 0; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.bar-col .bar {
+  width: 100%;
+  max-width: 62px;
+  background: linear-gradient(180deg, var(--agua-salobra) 0%, var(--agua-salobra-forte) 100%);
+  border-radius: 3px 3px 0 0;
+  position: relative;
+  min-height: 3px;
+}
+.bar-col .bar-label { font-size: 0.76rem; margin-top: 8px; text-align: center; color: #6b634c; }
+.bar-col .bar-value { font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; }
+
+table.data-table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+table.data-table th, table.data-table td {
+  text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--linha);
+}
+table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.03em; color: #6b634c; }
+
+.evidence-editor {
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+  border-top: 1px dashed var(--linha); padding-top: 14px; margin-top: 16px;
+}
+.evidence-editor textarea { flex: 1; min-width: 200px; min-height: 54px; }
+
+.socratic-list { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.socratic-list li {
+  font-family: var(--font-display); font-style: italic;
+  font-size: 0.95rem; color: var(--agua-salobra-forte);
+  padding-left: 18px; position: relative;
+}
+.socratic-list li::before { content: "?"; position: absolute; left: 0; color: var(--ferrugem); font-weight: 700; font-style: normal; }
+
+.microcopy {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ferrugem);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 14px;
+}
+
+.warning-box {
+  background: rgba(156,74,60,0.08);
+  border-left: 3px solid var(--alerta);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: #6b3226;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin-bottom: 16px;
+}
+
+/* Caderno de evidências (drawer lateral) */
+.evidence-drawer {
+  position: fixed;
+  top: 0; right: -420px;
+  width: 400px; max-width: 92vw; height: 100vh;
+  background: var(--areia-clara);
+  border-left: 1px solid var(--linha);
+  box-shadow: -6px 0 24px rgba(47,42,34,0.15);
+  z-index: 60;
+  transition: right 0.28s ease;
+  display: flex; flex-direction: column;
+}
+.evidence-drawer.open { right: 0; }
+.approvals-drawer { width: 460px; }
+.evidence-drawer.approvals-drawer.open { right: 0; }
+.drawer-header {
+  padding: 18px 20px; border-bottom: 1px solid var(--linha);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.drawer-header h3 { margin: 0; font-family: var(--font-display); }
+.drawer-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.evidence-item {
+  border: 1px solid var(--linha); border-radius: var(--radius);
+  padding: 12px; margin-bottom: 10px; background: white; font-size: 0.85rem;
+}
+.evidence-item .ev-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--ferrugem); margin-bottom: 4px; }
+.evidence-item .ev-remove { float: right; background: none; border: none; color: var(--alerta); font-size: 12px; font-weight: 700; }
+
+/* Painel de Aprovações — badges de status e cartões de submissão */
+.submission-status-panel { margin: 4px 0 6px; }
+.submission-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 11.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.03em;
+  padding: 6px 12px; border-radius: 20px;
+}
+.submission-badge.status-draft { background: rgba(203,191,164,0.35); color: #6b634c; }
+.submission-badge.status-pending { background: rgba(181,101,47,0.14); color: #8a4a20; }
+.submission-badge.status-pending::before { content: "⏳"; }
+.submission-badge.status-approved { background: rgba(122,140,79,0.18); color: #3f4c26; }
+.submission-badge.status-approved::before { content: "✓"; }
+.submission-badge.status-revision { background: rgba(156,74,60,0.14); color: var(--alerta); }
+.submission-badge.status-revision::before { content: "✎"; }
+
+.approval-item {
+  border: 1px solid var(--linha); border-radius: var(--radius);
+  padding: 16px; margin-bottom: 14px; background: white;
+}
+
+#btn-export-pdf:disabled, #btn-submit-approval:disabled {
+  opacity: 0.5; cursor: not-allowed;
+}
+
+.fab {
+  position: fixed; bottom: 24px; right: 24px; z-index: 45;
+  background: var(--ferrugem); color: white; border: none;
+  padding: 13px 20px; border-radius: 30px; font-weight: 700; font-size: 0.9rem;
+  box-shadow: 0 4px 16px rgba(181,101,47,0.35);
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* Nav de etapas (rodapé fixo) */
+.step-nav {
+  position: sticky; bottom: 0;
+  background: var(--areia-clara); border-top: 1px solid var(--linha);
+  padding: 14px 20px; display: flex; justify-content: space-between;
+  align-items: center; gap: 12px; z-index: 30;
+}
+.step-nav .save-indicator {
+  font-family: var(--font-mono); font-size: 11px; color: #8a8064;
+}
+
+/* Relatório final */
+.report-preview {
+  background: var(--areia); border: 1px solid var(--linha); border-radius: var(--radius);
+  padding: 10px;
+}
+.report-preview iframe { display: block; }
+.approval-item .report-preview {
+  background: white; padding: 12px; font-family: var(--font-mono);
+  font-size: 0.72rem; white-space: pre-wrap; max-height: 260px; overflow-y: auto;
+}
+
+.completeness-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.completeness-list li { display: flex; align-items: center; gap: 8px; font-size: 0.87rem; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot.ok { background: var(--junco); }
+.dot.pending { background: var(--linha); }
+
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--lodo); color: white; padding: 10px 20px; border-radius: 30px;
+  font-size: 0.85rem; opacity: 0; pointer-events: none; transition: all 0.25s ease; z-index: 90;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Modo professor */
+.teacher-banner {
+  background: var(--agua-salobra-forte); color: var(--areia-clara);
+  padding: 10px 20px; font-size: 0.85rem; display: flex; align-items: center; gap: 10px;
+}
+.teacher-banner strong { color: var(--ferrugem); }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 780px) { .two-col { grid-template-columns: 1fr; } }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+.skip-link {
+  position: absolute; left: -999px; top: 0; background: var(--lodo); color: white;
+  padding: 10px 16px; z-index: 100;
+}
+.skip-link:focus { left: 10px; top: 10px; }
+
+::selection { background: rgba(181,101,47,0.25); }
+
+/* =========================================================================
+   SELEÇÃO DE ACESSO (v2) — escolher turma e depois grupo, sem digitar nome
+   ========================================================================= */
+.access-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin: 28px 0;
+  max-width: 640px;
+}
+
+.access-card {
+  background: var(--areia-clara);
+  border: 1.5px solid var(--linha);
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.access-card:hover { border-color: var(--agua-salobra); transform: translateY(-2px); }
+.access-card:focus-visible { outline: 3px solid var(--ferrugem); outline-offset: 2px; }
+
+.access-card .access-card-icon {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  display: block;
+}
+.access-card .access-card-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--agua-salobra-forte);
+}
+.access-card .access-card-sub {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: #8a8064;
+  margin-top: 4px;
+}
+
+.access-card.class-card {
+  border-color: var(--agua-salobra-forte);
+  background: var(--agua-salobra-forte);
+}
+.access-card.class-card .access-card-title { color: white; }
+.access-card.class-card .access-card-sub { color: rgba(237,228,211,0.7); }
+.access-card.class-card:hover { background: var(--agua-salobra); }
+
+.access-breadcrumb {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: #8a8064;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.access-breadcrumb button {
+  background: none; border: none; color: var(--ferrugem);
+  font-family: inherit; font-size: inherit; cursor: pointer;
+  text-decoration: underline;
+}
+
+.access-loading, .access-error {
+  padding: 24px; text-align: center; color: #8a8064; font-size: 0.9rem;
+  max-width: 500px;
+}
+.access-error { color: var(--alerta); }
+
+.current-group-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(122,140,79,0.14); color: #3f4c26;
+  padding: 8px 14px; border-radius: 20px;
+  font-size: 0.85rem; font-weight: 600;
+  margin-bottom: 20px;
+}
+.current-group-badge button {
+  background: none; border: none; color: #6b634c;
+  text-decoration: underline; cursor: pointer; font-size: 0.8rem;
+  margin-left: 6px;
+}
+
+/* =========================================================================
+   GALERIA DE FOTOS E LIGHTBOX — imersão visual dos locais reais
+   ========================================================================= */
+.photo-strip {
+  display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px;
+  margin: 12px 0;
+}
+.photo-thumb {
+  flex: 0 0 auto; width: 140px; border: 1.5px solid var(--linha);
+  border-radius: var(--radius); overflow: hidden; background: white;
+  cursor: pointer; padding: 0; text-align: left;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.photo-thumb:hover { border-color: var(--ferrugem); transform: translateY(-2px); }
+.photo-thumb img {
+  width: 140px; height: 96px; object-fit: cover; display: block;
+  background: var(--areia);
+}
+.photo-thumb .photo-caption {
+  display: block; font-size: 10.5px; color: #6b634c; padding: 6px 8px;
+  font-family: var(--font-mono); line-height: 1.3;
+}
+.photo-thumb.photo-broken { cursor: default; opacity: 0.5; }
+.photo-thumb.photo-broken img { display: none; }
+.photo-thumb.photo-broken::after {
+  content: "Foto indisponível"; display: block; width: 140px; height: 96px;
+  background: var(--areia); color: #8a8064; font-size: 10px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+}
+
+.photo-placeholder {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 28px 16px; margin: 12px 0;
+  border: 1.5px dashed var(--linha); border-radius: var(--radius);
+  background: rgba(203,191,164,0.15); color: #8a8064; text-align: center;
+}
+.photo-placeholder-icon { font-size: 1.6rem; }
+.photo-placeholder-text { font-size: 0.82rem; max-width: 32ch; }
+
+.photo-lightbox {
+  position: fixed; inset: 0; background: rgba(24,20,14,0.92);
+  display: none; align-items: center; justify-content: center;
+  z-index: 200; padding: 40px;
+}
+.photo-lightbox.open { display: flex; }
+.photo-lightbox .lightbox-image {
+  max-width: min(88vw, 900px); max-height: 78vh; object-fit: contain;
+  border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.photo-lightbox .lightbox-caption {
+  position: absolute; bottom: 28px; left: 0; right: 0; text-align: center;
+  color: var(--areia-clara); font-family: var(--font-mono); font-size: 0.85rem;
+}
+.photo-lightbox .lightbox-close {
+  position: absolute; top: 20px; right: 24px; background: none; border: none;
+  color: white; font-size: 1.4rem; cursor: pointer; line-height: 1;
+  width: 40px; height: 40px; border-radius: 50%;
+}
+.photo-lightbox .lightbox-close:hover { background: rgba(255,255,255,0.12); }
+.photo-lightbox .lightbox-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.1); border: none; color: white;
+  font-size: 2rem; width: 52px; height: 52px; border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.photo-lightbox .lightbox-nav:hover { background: rgba(255,255,255,0.22); }
+.photo-lightbox .lightbox-prev { left: 16px; }
+.photo-lightbox .lightbox-next { right: 16px; }
+@media (max-width: 640px) {
+  .photo-lightbox { padding: 16px; }
+  .photo-lightbox .lightbox-nav { width: 42px; height: 42px; font-size: 1.5rem; }
+}
+
+</style>
 </head>
 <body>
 <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
 
-<!-- =========================== TELA INICIAL =========================== -->
+<!-- =========================== TELA INICIAL: SELEÇÃO DE ACESSO =========================== -->
 <section class="hero" id="hero">
   <div class="hero-card">
     <span class="hero-eyebrow">Estudo de Meio · Lagamar Paulista · 27–29 mai 2026</span>
     <h1>Lagamar Investiga<br /><em>Laboratório de Investigação Digital</em></h1>
     <p class="hero-question">"Como podemos investigar as relações entre trabalho, território e cotidiano no contexto do estudo de meio?"</p>
-    <p class="hero-desc">
+    <p class="hero-desc" id="hero-desc-text">
       Este não é um painel de respostas. É um espaço para observar dados reais de campo,
       comparar locais, registrar evidências e construir, em grupo, sua própria hipótese
       sobre o Mundo do Trabalho no Lagamar Paulista.
     </p>
-    <div class="hero-actions">
-      <button class="btn-primary" id="btn-start">Começar investigação →</button>
-      <button class="btn-secondary" id="btn-continue" style="display:none;">Continuar rascunho salvo</button>
+
+    <!-- Passo 1: escolher a turma -->
+    <div id="access-step-class">
+      <p class="access-breadcrumb">Passo 1 de 2 · Escolha sua turma</p>
+      <div class="access-select-grid" id="class-select-grid">
+        <div class="access-loading">Carregando turmas…</div>
+      </div>
+    </div>
+
+    <!-- Passo 2: escolher o grupo (aparece depois da turma escolhida) -->
+    <div id="access-step-group" style="display:none;">
+      <p class="access-breadcrumb">
+        <button type="button" id="btn-back-to-class">← Trocar turma</button>
+        · Passo 2 de 2 · Escolha seu grupo
+      </p>
+      <div class="access-select-grid" id="group-select-grid">
+        <div class="access-loading">Carregando grupos…</div>
+      </div>
+    </div>
+
+    <!-- Grupo já reconhecido de uma sessão anterior neste navegador -->
+    <div id="access-step-resume" style="display:none;">
+      <div class="current-group-badge">
+        ✓ Continuando como <strong id="resume-group-name">—</strong>
+        <button type="button" id="btn-switch-group">(trocar de grupo)</button>
+      </div>
+      <div class="hero-actions">
+        <button class="btn-primary" id="btn-resume-start">Continuar investigação →</button>
+        <button class="btn-secondary" id="btn-teacher-mode">Modo professor</button>
+      </div>
+    </div>
+
+    <div class="hero-actions" id="access-step-class-actions">
       <button class="btn-secondary" id="btn-teacher-mode">Modo professor</button>
     </div>
+
     <div class="hero-footnote">
       <span>7º ano · Projetos, Geografia, Ciências, História e Matemática</span>
-      <span>Funciona offline após o primeiro carregamento</span>
+      <span>Requer conexão com a internet (dados salvos na nuvem)</span>
     </div>
   </div>
 </section>
 
 <!-- =========================== APP SHELL =========================== -->
 <div class="app-shell" id="app-shell">
-
-  <div class="teacher-banner" id="teacher-banner" style="display:none;">
-    <span>👁️ <strong>Modo professor</strong> ativo — procedência dos dados visível, edição de base habilitada.</span>
-    <button class="icon-btn" id="btn-open-approvals" style="margin-left:auto;">🗂️ Relatórios para aprovar (<span id="pending-count">0</span>)</button>
-    <button class="icon-btn" id="btn-exit-teacher">Sair do modo professor</button>
-  </div>
 
   <header class="topbar">
     <span class="topbar-brand">🌿 Lagamar Investiga</span>
@@ -49,10 +860,6 @@
       <span>Atividade: <strong id="meta-activity">—</strong></span>
     </div>
     <div class="topbar-actions">
-      <div class="mode-toggle" role="group" aria-label="Alternar modo">
-        <button id="toggle-student" class="active" type="button">Estudante</button>
-        <button id="toggle-teacher" type="button">Professor</button>
-      </div>
       <button class="icon-btn" id="btn-open-evidence" type="button">📒 Evidências (<span id="evidence-count">0</span>)</button>
       <button class="icon-btn" id="btn-save-draft" type="button">💾 Salvar rascunho</button>
     </div>
@@ -67,15 +874,24 @@
       <div class="step-header">
         <span class="step-kicker">Etapa 1 de 9</span>
         <h2>Identificação</h2>
-        <p>Registre o grupo, a rodada de análise e a atividade do Caderno de Campo que vocês vão investigar hoje.</p>
+        <p>Confirme a rodada de análise e a atividade do Caderno de Campo que vocês vão investigar hoje.</p>
       </div>
+
+      <div class="card" id="import-ficha-card">
+        <h3>📄 Importar Ficha Técnica preenchida</h3>
+        <p class="card-sub">Se o grupo já preencheu a Ficha Técnica em PDF ou DOCX (digitada, não escaneada), envie o arquivo aqui para tentar preencher os campos automaticamente.</p>
+        <input type="file" id="import-ficha-input" accept=".pdf,.docx" />
+        <div id="import-ficha-status" style="margin-top:10px;"></div>
+        <p class="hint">Funciona apenas com texto digitado (não é OCR de letra manuscrita nem de fotos). Campos não encontrados ficam em branco para vocês completarem — nunca inventamos um valor.</p>
+      </div>
+
       <div class="card">
         <h3>Ficha contextualizada</h3>
         <p class="card-sub">Bloco 1 da Ficha Técnica — Triagem e Memória de Campo.</p>
         <div class="field-row">
           <div class="field">
-            <label for="f-groupName">Nome do grupo</label>
-            <input type="text" id="f-groupName" placeholder="Ex.: Grupo Manguezal" />
+            <label for="f-groupName">Grupo</label>
+            <input type="text" id="f-groupName" readonly />
           </div>
           <div class="field">
             <label for="f-analysisRound">Rodada de Análise atual</label>
@@ -284,8 +1100,11 @@
         </div>
       </div>
       <div class="card">
-        <h3>Prévia do relatório</h3>
-        <div class="report-preview" id="report-preview">Clique em "Gerar Relatório" para visualizar.</div>
+        <h3>Prévia do relatório (formato documento)</h3>
+        <p class="card-sub">É assim que o relatório vai aparecer quando exportado. Role dentro da prévia para ver tudo.</p>
+        <div class="report-preview" id="report-preview">
+          <p class="data-missing">Clique em "Gerar Relatório de Investigação" para visualizar o documento aqui.</p>
+        </div>
       </div>
     </section>
 
@@ -306,17 +1125,6 @@
   </div>
   <div class="drawer-body" id="evidence-list">
     <p class="hint">Nenhuma evidência registrada ainda. Ao explorar os painéis, clique em "Adicionar evidência" para guardar aqui uma observação, um dado ou uma comparação — sempre com sua própria interpretação.</p>
-  </div>
-</aside>
-
-<!-- =========================== PAINEL DE APROVAÇÕES (PROFESSOR) =========================== -->
-<aside class="evidence-drawer approvals-drawer" id="approvals-drawer" aria-label="Painel de Aprovações do Professor">
-  <div class="drawer-header">
-    <h3>🗂️ Relatórios para aprovar</h3>
-    <button class="icon-btn" id="btn-close-approvals" type="button">Fechar ✕</button>
-  </div>
-  <div class="drawer-body" id="approvals-list">
-    <p class="hint">Nenhum relatório enviado ainda.</p>
   </div>
 </aside>
 
@@ -676,6 +1484,2469 @@ window.LAGAMAR_DATA = {
 };
 
 </script>
-<script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+<script>
+/**
+ * supabaseClient.js
+ * Configuração central de conexão com o Supabase.
+ * Chave pública (publishable/anon) — segura para expor no front-end,
+ * já que o RLS controla o que pode ser lido/escrito (ver GUIA-DO-PROFESSOR.md
+ * para a política de acesso adotada: aberta, sem login de aluno).
+ */
+const SUPABASE_URL = "https://gcndwtswmtsivhheqyhv.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjbmR3dHN3bXRzaXZoaGVxeWh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2ODkzMDQsImV4cCI6MjEwMzI2NTMwNH0.pmqI9TC5Y2wpcYgcZfRRk0FZ2BinXN_zaY0YYcRWjtA";
+
+// window.supabase vem do CDN carregado no <head> do HTML. Se o CDN não
+// carregar (bloqueio de rede, firewall da escola, sem internet), não
+// deixamos o erro travar silenciosamente o resto da aplicação — expomos
+// window.sb como null e cada tela decide como avisar o usuário.
+if (window.supabase && typeof window.supabase.createClient === "function") {
+  window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else {
+  console.error(
+    "[Lagamar Investiga] A biblioteca do Supabase não carregou. Verifique a conexão com a internet."
+  );
+  window.sb = null;
+}
+
+</script>
+<script>
+/**
+ * api/studentSession.js
+ * Gerencia a "sessão" do grupo logado no navegador do aluno.
+ *
+ * Diferente da v1 (que guardava TUDO em localStorage), aqui o localStorage
+ * guarda só uma referência leve — QUAL grupo está usando este navegador
+ * agora — para não precisar clicar de novo no card a cada recarregamento
+ * de página. Todo o conteúdo da investigação (respostas, hipótese,
+ * evidências etc.) vive no Supabase, não aqui.
+ */
+window.LagamarSession = (function () {
+  "use strict";
+
+  const SESSION_KEY = "lagamar-investiga-active-group-v2";
+
+  function getActiveGroupId() {
+    try {
+      return localStorage.getItem(SESSION_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setActiveGroupId(groupId) {
+    try {
+      localStorage.setItem(SESSION_KEY, groupId);
+    } catch (e) {
+      console.warn("Não foi possível salvar a sessão do grupo:", e);
+    }
+  }
+
+  function clearActiveGroup() {
+    try {
+      localStorage.removeItem(SESSION_KEY);
+    } catch (e) {
+      /* ignora */
+    }
+  }
+
+  return { getActiveGroupId, setActiveGroupId, clearActiveGroup };
+})();
+
+</script>
+<script>
+/**
+ * api/classesGroups.js
+ * Acesso a turmas e grupos — usado na tela inicial de seleção de acesso.
+ */
+window.LagamarAPI = window.LagamarAPI || {};
+
+window.LagamarAPI.classesGroups = {
+  /** Lista todas as turmas cadastradas. */
+  async listClasses() {
+    const { data, error } = await window.sb
+      .from("classes")
+      .select("id, name, short_code")
+      .order("short_code");
+    if (error) throw error;
+    return data;
+  },
+
+  /** Lista os grupos de uma turma, ordenados por número. */
+  async listGroupsByClass(classId) {
+    const { data, error } = await window.sb
+      .from("groups")
+      .select("id, group_number, display_name, access_code")
+      .eq("class_id", classId)
+      .order("group_number");
+    if (error) throw error;
+    return data;
+  },
+
+  /** Busca um grupo pelo access_code (usado para deep-link / QR code). */
+  async getGroupByAccessCode(accessCode) {
+    const { data, error } = await window.sb
+      .from("groups")
+      .select("id, group_number, display_name, access_code, class_id, classes(name, short_code)")
+      .eq("access_code", accessCode)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  /** Busca um grupo pelo id. */
+  async getGroupById(groupId) {
+    const { data, error } = await window.sb
+      .from("groups")
+      .select("id, group_number, display_name, access_code, class_id, classes(name, short_code)")
+      .eq("id", groupId)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+};
+
+</script>
+<script>
+/**
+ * api/investigations.js
+ * CRUD da "investigação" (ficha técnica em andamento) de um grupo.
+ * Cada grupo pode ter várias investigações ao longo do ano (uma por
+ * rodada/atividade); aqui tratamos sempre da investigação "ativa" mais
+ * recente do grupo, criando uma nova quando necessário.
+ */
+window.LagamarAPI = window.LagamarAPI || {};
+
+const INVESTIGATION_COLUMNS = `
+  id, group_id, analysis_round, activity_number, activity_name, scenario,
+  task_division, materials, materials_accessible, raw_data, questions,
+  consultancy_notes, patterns, observations, hypothesis, supporting_evidence,
+  limiting_evidence, analytical_limits, work_bridge, headline, new_question,
+  next_step, current_step, submission_status, submitted_at, reviewed_at,
+  teacher_feedback, created_at, updated_at
+`;
+
+window.LagamarAPI.investigations = {
+  /** Busca a investigação mais recente de um grupo (a "ativa" no momento). */
+  async getActiveForGroup(groupId) {
+    const { data, error } = await window.sb
+      .from("investigations")
+      .select(INVESTIGATION_COLUMNS)
+      .eq("group_id", groupId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  /** Cria uma investigação nova e vazia para o grupo. */
+  async createForGroup(groupId) {
+    const { data, error } = await window.sb
+      .from("investigations")
+      .insert({ group_id: groupId })
+      .select(INVESTIGATION_COLUMNS)
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  /** Garante que existe uma investigação ativa; cria se não houver. */
+  async getOrCreateForGroup(groupId) {
+    const existing = await this.getActiveForGroup(groupId);
+    if (existing) return existing;
+    return this.createForGroup(groupId);
+  },
+
+  /** Atualiza campos da investigação (patch parcial). */
+  async update(investigationId, patch) {
+    const { data, error } = await window.sb
+      .from("investigations")
+      .update(patch)
+      .eq("id", investigationId)
+      .select(INVESTIGATION_COLUMNS)
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  /** Lista todas as investigações de uma mesma rodada+atividade, para comparação entre grupos. */
+  async listByRoundAndActivity(analysisRound, activityNumber, classId) {
+    let query = window.sb
+      .from("investigations")
+      .select(`
+        ${INVESTIGATION_COLUMNS},
+        groups!inner(id, group_number, display_name, class_id, classes(name, short_code))
+      `)
+      .eq("analysis_round", analysisRound)
+      .eq("activity_number", activityNumber);
+
+    if (classId) {
+      query = query.eq("groups.class_id", classId);
+    }
+
+    const { data, error } = await query.order("group_id");
+    if (error) throw error;
+    return data;
+  },
+
+  /** Lista todas as investigações (para o painel geral do professor). */
+  async listAll() {
+    const { data, error } = await window.sb
+      .from("investigations")
+      .select(`
+        ${INVESTIGATION_COLUMNS},
+        groups(id, group_number, display_name, class_id, classes(name, short_code))
+      `)
+      .order("updated_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+};
+
+</script>
+<script>
+/**
+ * api/dataPoints.js
+ * Catalogação explícita de dados QUANTITATIVOS vs QUALITATIVOS (pedido da
+ * reunião com coordenação). Cada "dado" é uma linha própria — isso permite
+ * ao dashboard da Aula de Cultura e Inovação puxar só os quantitativos
+ * (com unidade) para montar gráficos, e usar os qualitativos como contexto
+ * textual, sem precisar adivinhar a partir de texto livre.
+ */
+window.LagamarAPI = window.LagamarAPI || {};
+
+window.LagamarAPI.dataPoints = {
+  async listForInvestigation(investigationId) {
+    const { data, error } = await window.sb
+      .from("data_points")
+      .select("*")
+      .eq("investigation_id", investigationId)
+      .order("created_at");
+    if (error) throw error;
+    return data;
+  },
+
+  async add(investigationId, point) {
+    // point: { data_type, panel, location, variable_name, numeric_value,
+    //          text_value, unit, provenance, notes }
+    const { data, error } = await window.sb
+      .from("data_points")
+      .insert({ investigation_id: investigationId, ...point })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async update(id, patch) {
+    const { data, error } = await window.sb
+      .from("data_points")
+      .update(patch)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async remove(id) {
+    const { error } = await window.sb.from("data_points").delete().eq("id", id);
+    if (error) throw error;
+  },
+
+  /** Só os quantitativos, prontos para virar gráfico no dashboard/.md */
+  async listQuantitative(investigationId) {
+    const all = await this.listForInvestigation(investigationId);
+    return all.filter((p) => p.data_type === "quantitativo");
+  },
+
+  /** Só os qualitativos, para entrar como contexto textual. */
+  async listQualitative(investigationId) {
+    const all = await this.listForInvestigation(investigationId);
+    return all.filter((p) => p.data_type === "qualitativo");
+  },
+};
+
+/**
+ * api/tableRows.js
+ * Linhas da tabela livre "Passando a Limpo".
+ */
+window.LagamarAPI.tableRows = {
+  async listForInvestigation(investigationId) {
+    const { data, error } = await window.sb
+      .from("table_rows")
+      .select("*")
+      .eq("investigation_id", investigationId)
+      .order("row_order");
+    if (error) throw error;
+    return data;
+  },
+
+  async add(investigationId, cells, rowOrder) {
+    const { data, error } = await window.sb
+      .from("table_rows")
+      .insert({ investigation_id: investigationId, cells, row_order: rowOrder })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async update(id, cells) {
+    const { data, error } = await window.sb
+      .from("table_rows")
+      .update({ cells })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async remove(id) {
+    const { error } = await window.sb.from("table_rows").delete().eq("id", id);
+    if (error) throw error;
+  },
+};
+
+/**
+ * api/evidenceLog.js
+ * Caderno de Evidências.
+ */
+window.LagamarAPI.evidenceLog = {
+  async listForInvestigation(investigationId) {
+    const { data, error } = await window.sb
+      .from("evidence_log")
+      .select("*")
+      .eq("investigation_id", investigationId)
+      .order("created_at");
+    if (error) throw error;
+    return data;
+  },
+
+  async add(investigationId, panel, reference, studentNote) {
+    const { data, error } = await window.sb
+      .from("evidence_log")
+      .insert({ investigation_id: investigationId, panel, reference, student_note: studentNote })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async remove(id) {
+    const { error } = await window.sb.from("evidence_log").delete().eq("id", id);
+    if (error) throw error;
+  },
+};
+
+</script>
+<script>
+/**
+ * api/locationPhotos.js
+ * Fotos reais dos locais do Lagamar Paulista, por painel/estação.
+ * O professor sobe os arquivos no Storage do Supabase (bucket
+ * "location-photos"); esta API busca os registros e monta a URL
+ * pública. Enquanto uma foto não foi enviada, a UI mostra um
+ * placeholder ilustrado (nunca uma imagem quebrada).
+ */
+window.LagamarAPI = window.LagamarAPI || {};
+
+const PHOTOS_BUCKET = "location-photos";
+
+window.LagamarAPI.locationPhotos = {
+  /** Lista todas as fotos cadastradas para um painel (ex: "ecossistemas"). */
+  async listForPanel(panel) {
+    const { data, error } = await window.sb
+      .from("location_photos")
+      .select("*")
+      .eq("panel", panel)
+      .order("location_key");
+    if (error) throw error;
+    return data.map((row) => ({
+      ...row,
+      publicUrl: window.sb.storage.from(PHOTOS_BUCKET).getPublicUrl(row.storage_path).data.publicUrl,
+    }));
+  },
+
+  /** Busca a(s) foto(s) de um local específico dentro de um painel. */
+  async listForLocation(panel, locationKey) {
+    const all = await this.listForPanel(panel);
+    return all.filter((p) => p.location_key === locationKey);
+  },
+};
+
+</script>
+<script>
+/**
+ * ui/photoGallery.js
+ * Componente reutilizável: renderiza uma faixa de miniaturas de fotos
+ * reais de um local, com placeholder ilustrado quando a foto ainda não
+ * foi enviada pelo professor, e um lightbox interativo para ampliar
+ * (clique, teclado ← → para navegar, ESC para fechar).
+ */
+window.LagamarUI = window.LagamarUI || {};
+
+window.LagamarUI.photoGallery = (function () {
+  "use strict";
+
+  let currentPhotos = [];
+  let currentIndex = 0;
+
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
+
+  /**
+   * Renderiza a faixa de fotos dentro do elemento alvo.
+   * @param {HTMLElement} container
+   * @param {Array} photos - registros vindos de LagamarAPI.locationPhotos
+   * @param {string} placeholderLabel - texto do placeholder quando vazio
+   */
+  function render(container, photos, placeholderLabel) {
+    if (!photos || photos.length === 0) {
+      container.innerHTML = `
+        <div class="photo-placeholder" role="img" aria-label="Foto ainda não disponível">
+          <span class="photo-placeholder-icon">🌿</span>
+          <span class="photo-placeholder-text">${escapeHtml(placeholderLabel || "Foto deste local ainda não foi adicionada")}</span>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="photo-strip">
+        ${photos
+          .map(
+            (p, i) => `
+          <button class="photo-thumb" data-photo-index="${i}" type="button" aria-label="Ampliar foto: ${escapeHtml(p.caption || "")}">
+            <img src="${escapeHtml(p.publicUrl)}" alt="${escapeHtml(p.caption || "Foto do Lagamar Paulista")}" loading="lazy"
+                 onerror="this.closest('.photo-thumb').classList.add('photo-broken')" />
+            <span class="photo-caption">${escapeHtml(p.caption || "")}</span>
+          </button>`
+          )
+          .join("")}
+      </div>`;
+
+    container.querySelectorAll("[data-photo-index]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.classList.contains("photo-broken")) return; // não abre lightbox de imagem quebrada
+        openLightbox(photos, Number(btn.dataset.photoIndex));
+      });
+    });
+  }
+
+  function ensureLightboxElement() {
+    let el = document.getElementById("photo-lightbox");
+    if (el) return el;
+
+    el = document.createElement("div");
+    el.id = "photo-lightbox";
+    el.className = "photo-lightbox";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-modal", "true");
+    el.innerHTML = `
+      <button class="lightbox-close" type="button" aria-label="Fechar">✕</button>
+      <button class="lightbox-nav lightbox-prev" type="button" aria-label="Foto anterior">‹</button>
+      <img class="lightbox-image" src="" alt="" />
+      <button class="lightbox-nav lightbox-next" type="button" aria-label="Próxima foto">›</button>
+      <div class="lightbox-caption"></div>
+    `;
+    document.body.appendChild(el);
+
+    el.querySelector(".lightbox-close").addEventListener("click", closeLightbox);
+    el.addEventListener("click", (e) => {
+      if (e.target === el) closeLightbox();
+    });
+    el.querySelector(".lightbox-prev").addEventListener("click", () => navigate(-1));
+    el.querySelector(".lightbox-next").addEventListener("click", () => navigate(1));
+
+    document.addEventListener("keydown", (e) => {
+      if (!el.classList.contains("open")) return;
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") navigate(-1);
+      if (e.key === "ArrowRight") navigate(1);
+    });
+
+    return el;
+  }
+
+  function openLightbox(photos, index) {
+    currentPhotos = photos;
+    currentIndex = index;
+    const el = ensureLightboxElement();
+    updateLightboxContent();
+    el.classList.add("open");
+  }
+
+  function updateLightboxContent() {
+    const el = document.getElementById("photo-lightbox");
+    const photo = currentPhotos[currentIndex];
+    const img = el.querySelector(".lightbox-image");
+    img.src = photo.publicUrl;
+    img.alt = photo.caption || "Foto do Lagamar Paulista";
+    el.querySelector(".lightbox-caption").textContent = photo.caption || "";
+    el.querySelector(".lightbox-prev").style.display = currentPhotos.length > 1 ? "flex" : "none";
+    el.querySelector(".lightbox-next").style.display = currentPhotos.length > 1 ? "flex" : "none";
+  }
+
+  function navigate(delta) {
+    currentIndex = (currentIndex + delta + currentPhotos.length) % currentPhotos.length;
+    updateLightboxContent();
+  }
+
+  function closeLightbox() {
+    const el = document.getElementById("photo-lightbox");
+    if (el) el.classList.remove("open");
+  }
+
+  return { render };
+})();
+
+</script>
+<script>
+/**
+ * api/submissions.js
+ * Fluxo de envio para aprovação / aprovação / revisão solicitada.
+ * A tabela `submissions` guarda o HISTÓRICO imutável de cada envio;
+ * o status "corrente" também fica espelhado em `investigations` para
+ * facilitar a leitura rápida na tela do aluno.
+ */
+window.LagamarAPI = window.LagamarAPI || {};
+
+window.LagamarAPI.submissions = {
+  /** Envia (ou reenvia) uma investigação para aprovação. */
+  async submit(investigationId, reportMarkdown) {
+    const now = new Date().toISOString();
+
+    const { data: submission, error: subError } = await window.sb
+      .from("submissions")
+      .insert({
+        investigation_id: investigationId,
+        report_markdown: reportMarkdown,
+        status: "aguardando-aprovacao",
+        submitted_at: now,
+      })
+      .select()
+      .single();
+    if (subError) throw subError;
+
+    const investigation = await window.LagamarAPI.investigations.update(investigationId, {
+      submission_status: "aguardando-aprovacao",
+      submitted_at: now,
+      teacher_feedback: "",
+    });
+
+    return { submission, investigation };
+  },
+
+  /** Lista todas as submissões pendentes (para o painel do professor). */
+  async listPending() {
+    const { data, error } = await window.sb
+      .from("submissions")
+      .select(`
+        *,
+        investigations(
+          id, analysis_round, activity_number, activity_name, headline,
+          group_id, groups(id, group_number, display_name, class_id, classes(name, short_code))
+        )
+      `)
+      .eq("status", "aguardando-aprovacao")
+      .order("submitted_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  /** Lista TODAS as submissões (histórico completo, qualquer status). */
+  async listAll() {
+    const { data, error } = await window.sb
+      .from("submissions")
+      .select(`
+        *,
+        investigations(
+          id, analysis_round, activity_number, activity_name, headline,
+          group_id, groups(id, group_number, display_name, class_id, classes(name, short_code))
+        )
+      `)
+      .order("submitted_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  /** Professor aprova. */
+  async approve(submissionId, investigationId, feedback) {
+    const now = new Date().toISOString();
+
+    const { error: subError } = await window.sb
+      .from("submissions")
+      .update({ status: "aprovado", teacher_feedback: feedback || "", reviewed_at: now })
+      .eq("id", submissionId);
+    if (subError) throw subError;
+
+    return window.LagamarAPI.investigations.update(investigationId, {
+      submission_status: "aprovado",
+      teacher_feedback: feedback || "",
+      reviewed_at: now,
+    });
+  },
+
+  /** Professor solicita revisão (comentário obrigatório, validado na UI). */
+  async requestRevision(submissionId, investigationId, feedback) {
+    const now = new Date().toISOString();
+
+    const { error: subError } = await window.sb
+      .from("submissions")
+      .update({ status: "revisao-solicitada", teacher_feedback: feedback, reviewed_at: now })
+      .eq("id", submissionId);
+    if (subError) throw subError;
+
+    return window.LagamarAPI.investigations.update(investigationId, {
+      submission_status: "revisao-solicitada",
+      teacher_feedback: feedback,
+      reviewed_at: now,
+    });
+  },
+};
+
+</script>
+<script>
+/**
+ * import/fichaTecnicaImport.js
+ * -----------------------------------------------------------------------
+ * Lê um arquivo PDF ou DOCX da Ficha Técnica preenchida à mão (ou digitada
+ * em outro lugar) e tenta extrair os campos automaticamente, pré-populando
+ * o formulário da investigação.
+ *
+ * Estratégia: a Ficha Técnica oficial tem rótulos de texto fixos e
+ * previsíveis (ex: "● Grupo:", "○ Número da Atividade no Caderno de
+ * Campo:", "A Grande Constatação (Manchete):"). Extraímos o texto bruto
+ * do arquivo e localizamos, para cada campo, o texto entre um rótulo e o
+ * próximo rótulo conhecido.
+ *
+ * IMPORTANTE — honestidade sobre os limites desta extração:
+ * - Isto NÃO é OCR de letra manuscrita. Só funciona bem com texto
+ *   digitado/datilografado no PDF ou DOCX.
+ *   Se o arquivo for um PDF escaneado de um formulário preenchido à mão,
+ *   o texto não será extraível e a aplicação deve avisar isso claramente
+ *   (nunca inventar valores para compensar).
+ * - Sempre que um campo não for localizado com confiança, ele é deixado
+ *   em branco — jamais preenchido com um palpite. O aluno/professor
+ *   confere e completa manualmente o que faltar.
+ * - Todo campo importado é marcado como "importado do documento X" para
+ *   rastreabilidade, e pode ser editado livremente depois.
+ * -----------------------------------------------------------------------
+ */
+window.LagamarImport = (function () {
+  "use strict";
+
+  // Rótulos EXATOS conforme a Ficha Técnica de Análise de Dados —
+  // LAGAMAR PAULISTA 2026 (páginas 1 e 2 do documento oficial).
+  //
+  // Dois tipos de campo:
+  // - "direct": a resposta vem logo após o próprio rótulo até o próximo
+  //   marcador (ex: "Dúvida 1: <resposta aqui>").
+  // - "afterR": o rótulo é seguido do ENUNCIADO da pergunta (às vezes
+  //   longo, em várias linhas) e só DEPOIS aparece "R:" com a resposta
+  //   de fato. Nesse caso a resposta é o texto após o "R:" mais próximo
+  //   que vem depois do rótulo — nunca o enunciado da pergunta em si.
+  const FIELD_MARKERS = [
+    { key: "groupName", markers: ["● Grupo:", "Grupo:"], mode: "direct" },
+    { key: "analysisRound", markers: ["Rodada de Análise atual:"], mode: "direct" },
+    { key: "activityNumber", markers: ["Número da Atividade no Caderno de Campo:"], mode: "direct" },
+    { key: "activityName", markers: ["Nome da Atividade:"], mode: "direct" },
+    { key: "scenario", markers: ["O Cenário:"], mode: "afterR" },
+    { key: "taskDivision", markers: ["Divisão de Tarefas no Campo:"], mode: "afterR" },
+    { key: "materialsBlock", markers: ["Inventário de Material:"], mode: "direct" },
+    { key: "rawData", markers: ["Os Dados:"], mode: "direct", lowConfidenceAlways: true },
+    { key: "question1", markers: ["Dúvida 1:"], mode: "direct" },
+    { key: "question2", markers: ["Dúvida 2:"], mode: "direct" },
+    { key: "question3", markers: ["Dúvida 3:"], mode: "direct" },
+    { key: "consultancyNotes", markers: ["Anotações da Consultoria:"], mode: "direct" },
+    { key: "patterns", markers: ["Padrões e Destaques:"], mode: "direct" },
+    { key: "workBridge", markers: ["A Ponte Principal:"], mode: "direct" },
+    { key: "headline", markers: ["A Grande Constatação (Manchete):"], mode: "direct" },
+    { key: "newQuestion", markers: ["Semente para a Questão Motivadora:"], mode: "direct" },
+  ];
+
+  // Marcadores "de corte" — sempre que aparecem, encerram a captura do
+  // campo anterior mesmo que não estejam na lista de campos (evitam que
+  // um campo "vaze" para dentro de instruções da própria ficha).
+  const SECTION_BREAKS = [
+    "1. Triagem e Memória de Campo",
+    "2. Passando a Limpo",
+    "3. O Balcão dos Especialistas",
+    "4. A Lupa Analítica e a Ponte",
+    "5. Síntese para a Apresentação",
+    "Instrução:",
+  ];
+
+  /** Extrai texto de um arquivo PDF usando pdf.js (carregado via CDN).
+   *  IMPORTANTE: pdf.js precisa de um "worker" configurado antes do
+   *  primeiro uso, ou a extração falha. Configuramos uma única vez,
+   *  usando a mesma versão do script principal carregado no <head>. */
+  let pdfWorkerConfigured = false;
+  function ensurePdfWorkerConfigured() {
+    if (pdfWorkerConfigured || !window.pdfjsLib) return;
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    pdfWorkerConfigured = true;
+  }
+
+  async function extractTextFromPdf(arrayBuffer) {
+    if (!window.pdfjsLib) {
+      throw new Error(
+        "A biblioteca de leitura de PDF não carregou. Verifique sua conexão com a internet e recarregue a página."
+      );
+    }
+    ensurePdfWorkerConfigured();
+    const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map((item) => item.str).join(" ");
+      fullText += pageText + "\n";
+    }
+    return fullText;
+  }
+
+  /** Extrai texto de um arquivo DOCX usando mammoth.js (carregado via CDN). */
+  async function extractTextFromDocx(arrayBuffer) {
+    if (!window.mammoth) {
+      throw new Error(
+        "A biblioteca de leitura de DOCX não carregou. Verifique sua conexão com a internet e recarregue a página."
+      );
+    }
+    const result = await window.mammoth.extractRawText({ arrayBuffer });
+    return result.value;
+  }
+
+  /** Remove bullets/marcadores soltos que sobraram no início/fim do texto
+   *  capturado (ex: quando o campo está vazio no formulário original e o
+   *  parser captura só o próximo "●" antes do próximo rótulo real). */
+  function stripNoiseAndCheckEmpty(raw) {
+    if (!raw) return null;
+    const cleaned = raw
+      .replace(/^[●○\-\s]+/, "")
+      .replace(/[●○\-\s]+$/, "")
+      .trim();
+    if (!cleaned || /^[\s.,;:●○\-]*$/.test(cleaned) || cleaned.length < 2) return null;
+    return cleaned;
+  }
+
+  /**
+   * Localiza, para cada campo conhecido, o trecho de texto entre seu
+   * rótulo e o próximo marcador (rótulo de outro campo ou quebra de
+   * seção). Retorna { campo: valor_ou_null }.
+   */
+  function parseFieldsFromText(text) {
+    // Normaliza quebras de linha e espaços múltiplos para facilitar a busca,
+    // mas preserva o texto original para extrair os trechos com fidelidade.
+    const normalized = text.replace(/\r\n/g, "\n").replace(/[ \t]+/g, " ");
+
+    // Lista plana de TODOS os marcadores conhecidos (campos + quebras de
+    // seção + o marcador de resposta "R:"), cada um com sua posição no
+    // texto — usada para descobrir onde um campo "termina" (no próximo
+    // marcador que aparecer depois dele).
+    const allMarkerStrings = [
+      ...FIELD_MARKERS.flatMap((f) => f.markers),
+      ...SECTION_BREAKS,
+      "R:",
+    ];
+    allMarkerStrings.sort((a, b) => b.length - a.length);
+
+    const positions = [];
+    const seenSpans = [];
+    allMarkerStrings.forEach((marker) => {
+      let searchFrom = 0;
+      while (true) {
+        const idx = normalized.indexOf(marker, searchFrom);
+        if (idx === -1) break;
+        const overlaps = seenSpans.some((s) => idx < s.end && idx + marker.length > s.start);
+        if (!overlaps) {
+          positions.push({ marker, start: idx, end: idx + marker.length });
+          seenSpans.push({ start: idx, end: idx + marker.length });
+        }
+        searchFrom = idx + marker.length;
+      }
+    });
+    positions.sort((a, b) => a.start - b.start);
+
+    const result = {};
+    let confidence = {}; // 'alta' | 'baixa' por campo, para a UI sinalizar
+
+    FIELD_MARKERS.forEach((field) => {
+      let bestValue = null;
+      for (const markerText of field.markers) {
+        const hit = positions.find((p) => p.marker === markerText);
+        if (!hit) continue;
+
+        // Fim do campo: o próximo marcador de CAMPO ou QUEBRA DE SEÇÃO
+        // depois deste rótulo (nunca um "R:", que é interno ao campo).
+        const fieldEndMarkers = positions.filter((p) => p.start > hit.end && p.marker !== "R:");
+        const hardEnd = fieldEndMarkers.length > 0 ? fieldEndMarkers[0].start : hit.end + 600;
+
+        if (field.mode === "afterR") {
+          // A resposta real do aluno vem depois do "R:" mais próximo,
+          // não logo após o rótulo (que é seguido do enunciado da
+          // pergunta). Sem "R:" localizado, deixamos em branco — nunca
+          // arriscamos capturar a pergunta como se fosse resposta.
+          const rMarker = positions.find(
+            (p) => p.marker === "R:" && p.start > hit.end && p.start < hardEnd
+          );
+          if (rMarker) {
+            const rawSlice = normalized.slice(rMarker.end, hardEnd);
+            const cleaned = stripNoiseAndCheckEmpty(rawSlice.replace(/^[:\s]+/, ""));
+            if (cleaned) {
+              bestValue = cleaned;
+              break;
+            }
+          }
+        } else {
+          const rawSlice = normalized.slice(hit.end, hardEnd);
+          const cleaned = stripNoiseAndCheckEmpty(rawSlice.replace(/^[:\s]+/, ""));
+          if (cleaned) {
+            bestValue = cleaned;
+            break; // usa o primeiro marcador da lista que deu resultado
+          }
+        }
+      }
+      result[field.key] = bestValue;
+      confidence[field.key] = field.lowConfidenceAlways
+        ? "baixa"
+        : bestValue && bestValue.length > 2
+        ? "alta"
+        : "baixa";
+    });
+
+    return { fields: result, confidence };
+  }
+
+  /** Interpreta o bloco de "Rodada de Análise atual: ( ) 1 ( ) 2 ( ) 3" e tenta achar qual foi marcado. */
+  function parseAnalysisRound(rawValue) {
+    if (!rawValue) return null;
+    // Formulários preenchidos à mão geralmente marcam com "X", "✓" ou
+    // preenchem o parêntese: "(X) 2" ou "( ✓ ) 2". Buscamos o padrão
+    // mais comum; se não achar com confiança, deixa em branco.
+    const match = rawValue.match(/\(\s*[xX✓]\s*\)\s*(\d)/);
+    if (match) return match[1];
+    // fallback: se só um número aparece isolado no texto, usa ele.
+    const numbers = rawValue.match(/\b([123])\b/g);
+    if (numbers && numbers.length === 1) return numbers[0];
+    return null; // ambíguo — melhor deixar em branco do que arriscar errado
+  }
+
+  /** Interpreta o bloco de materiais marcados com (X) para a checklist. */
+  function parseMaterialsChecklist(rawValue) {
+    if (!rawValue) return [];
+    const options = [
+      { label: "Textos e anotações escritas no caderno", pattern: /textos e anotações/i },
+      { label: "Fotografias", pattern: /fotografias/i },
+      { label: "Vídeos ou gravações de áudio", pattern: /vídeos ou gravações/i },
+      { label: "Tabelas, contagens ou mapas preenchidos", pattern: /tabelas, contagens/i },
+    ];
+    const found = [];
+    options.forEach((opt) => {
+      // Procura o padrão precedido de uma marcação "(X)" nas proximidades.
+      const re = new RegExp("\\([xX✓]\\)[^\\n]{0,10}" + opt.pattern.source, "i");
+      if (re.test(rawValue)) found.push(opt.label);
+    });
+    return found;
+  }
+
+  /**
+   * Função principal: recebe um File (do <input type="file">) e devolve
+   * um objeto pronto para popular o formulário, junto com metadados de
+   * confiança e uma lista de campos que não foram encontrados.
+   */
+  async function importFromFile(file) {
+    const buffer = await file.arrayBuffer();
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    const isDocx =
+      file.name.toLowerCase().endsWith(".docx") ||
+      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+    if (!isPdf && !isDocx) {
+      throw new Error("Formato não suportado. Envie um arquivo .pdf ou .docx.");
+    }
+
+    let rawText;
+    try {
+      rawText = isPdf ? await extractTextFromPdf(buffer) : await extractTextFromDocx(buffer);
+    } catch (e) {
+      // Erros que já vêm com mensagem clara e específica (ex: biblioteca
+      // não carregada) devem ser propagados como estão — só mascaramos
+      // com a mensagem genérica quando o erro vem da própria lib de
+      // parsing falhando ao interpretar o conteúdo do arquivo.
+      if (e.message.includes("não carregou")) throw e;
+      throw new Error(
+        "Não foi possível ler o texto do arquivo. Se for um PDF escaneado (foto do formulário preenchido à mão), esta importação automática não funciona — preencha manualmente."
+      );
+    }
+
+    if (!rawText || rawText.trim().length < 20) {
+      throw new Error(
+        "O arquivo não parece ter texto extraível (pode ser um documento escaneado/imagem). Preencha manualmente."
+      );
+    }
+
+    const { fields, confidence } = parseFieldsFromText(rawText);
+
+    const parsedRound = parseAnalysisRound(fields.analysisRound);
+    const parsedMaterials = parseMaterialsChecklist(fields.materialsBlock);
+
+    const notFound = FIELD_MARKERS.filter((f) => !fields[f.key]).map((f) => f.key);
+
+    return {
+      sourceFileName: file.name,
+      importedAt: new Date().toISOString(),
+      fields: {
+        groupName: fields.groupName || "",
+        analysisRound: parsedRound || "",
+        activityNumber: extractLeadingNumber(fields.activityNumber),
+        activityName: fields.activityName || "",
+        scenario: fields.scenario || "",
+        taskDivision: fields.taskDivision || "",
+        materials: parsedMaterials,
+        rawData: fields.rawData || "",
+        question1: fields.question1 || "",
+        question2: fields.question2 || "",
+        question3: fields.question3 || "",
+        consultancyNotes: fields.consultancyNotes || "",
+        patterns: fields.patterns || "",
+        workBridge: fields.workBridge || "",
+        headline: fields.headline || "",
+        newQuestion: fields.newQuestion || "",
+      },
+      confidence,
+      notFoundFields: notFound,
+      rawTextPreview: rawText.slice(0, 400),
+    };
+  }
+
+  function extractLeadingNumber(value) {
+    if (!value) return "";
+    const match = value.match(/\d+/);
+    return match ? match[0] : "";
+  }
+
+  return { importFromFile };
+})();
+
+</script>
+<script>
+/**
+ * studentApp.js — Lagamar Investiga (v2)
+ * Camada de interface e lógica de estado do aluno. Diferente da v1,
+ * a persistência é feita no Supabase (window.LagamarAPI), não em
+ * localStorage — o localStorage aqui só guarda qual grupo está "logado"
+ * neste navegador (ver api/studentSession.js).
+ */
+(function () {
+  "use strict";
+
+  if (!window.LAGAMAR_DATA) {
+    document.addEventListener("DOMContentLoaded", () => {
+      document.body.innerHTML =
+        '<div style="max-width:640px;margin:80px auto;padding:28px;' +
+        'font-family:system-ui,sans-serif;border:2px solid #9c4a3c;' +
+        'border-radius:6px;background:#fdf3f1;color:#2f2a22;">' +
+        '<h1 style="margin-top:0;color:#9c4a3c;font-size:1.3rem;">' +
+        "Não foi possível carregar os dados da aplicação</h1>" +
+        "<p>O conteúdo de referência (lagamarData.js) não foi encontrado.</p></div>";
+    });
+    return;
+  }
+
+  if (!window.sb || !window.LagamarAPI) {
+    document.addEventListener("DOMContentLoaded", () => {
+      document.body.innerHTML =
+        '<div style="max-width:640px;margin:80px auto;padding:28px;' +
+        'font-family:system-ui,sans-serif;border:2px solid #9c4a3c;' +
+        'border-radius:6px;background:#fdf3f1;color:#2f2a22;">' +
+        '<h1 style="margin-top:0;color:#9c4a3c;font-size:1.3rem;">' +
+        "Não foi possível conectar ao banco de dados</h1>" +
+        "<p>Verifique sua conexão com a internet e recarregue a página. " +
+        "Esta versão da ferramenta precisa estar online para funcionar, " +
+        "pois os dados são salvos na nuvem (Supabase) e compartilhados " +
+        "com o professor em tempo real.</p></div>";
+    });
+    return;
+  }
+
+  const D = window.LAGAMAR_DATA;
+  const TOTAL_STEPS = 9;
+
+  // -----------------------------------------------------------------
+  // Estado (agora espelha uma linha da tabela `investigations` no
+  // Supabase, não mais o localStorage inteiro)
+  // -----------------------------------------------------------------
+  const defaultState = () => ({
+    // identidade (preenchida a partir do grupo escolhido na tela inicial)
+    investigationId: null,
+    groupId: null,
+    groupName: "",
+    className: "",
+
+    analysisRound: "",
+    activityNumber: "",
+    activityName: "",
+    scenario: "",
+    taskDivision: "",
+    materials: [],
+    materialsAccessible: "",
+    rawData: "",
+    tableRows: [], // linhas carregadas/salvas via api/dataPoints.js (table_rows)
+    questions: ["", "", ""],
+    consultancyNotes: "",
+    patterns: "",
+    observations: "",
+    hypothesis: "",
+    supportingEvidence: "",
+    limitingEvidence: "",
+    analyticalLimits: "",
+    workBridge: "",
+    headline: "",
+    newQuestion: "",
+    nextStep: "",
+    evidenceLog: [],
+    currentStep: 1,
+    // --- controle de submissão/aprovação ---
+    submissionStatus: "rascunho",
+    submittedAt: null,
+    teacherFeedback: "",
+    reviewedAt: null,
+  });
+
+  let state = defaultState();
+  let currentPanel = "fisico-sonoro";
+  let saveTimer = null;
+
+  /** Carrega a investigação ativa do grupo (Supabase) para dentro do `state` local. */
+  async function loadStateFromSupabase(groupId) {
+    const inv = await window.LagamarAPI.investigations.getOrCreateForGroup(groupId);
+    const rows = await window.LagamarAPI.tableRows.listForInvestigation(inv.id);
+    const evidence = await window.LagamarAPI.evidenceLog.listForInvestigation(inv.id);
+
+    state = Object.assign(defaultState(), {
+      investigationId: inv.id,
+      groupId,
+      analysisRound: inv.analysis_round ? String(inv.analysis_round) : "",
+      activityNumber: inv.activity_number ? String(inv.activity_number) : "",
+      activityName: inv.activity_name || "",
+      scenario: inv.scenario || "",
+      taskDivision: inv.task_division || "",
+      materials: inv.materials || [],
+      materialsAccessible: inv.materials_accessible || "",
+      rawData: inv.raw_data || "",
+      tableRows: rows.map((r) => ({ id: r.id, cells: r.cells })),
+      questions: inv.questions || ["", "", ""],
+      consultancyNotes: inv.consultancy_notes || "",
+      patterns: inv.patterns || "",
+      observations: inv.observations || "",
+      hypothesis: inv.hypothesis || "",
+      supportingEvidence: inv.supporting_evidence || "",
+      limitingEvidence: inv.limiting_evidence || "",
+      analyticalLimits: inv.analytical_limits || "",
+      workBridge: inv.work_bridge || "",
+      headline: inv.headline || "",
+      newQuestion: inv.new_question || "",
+      nextStep: inv.next_step || "",
+      evidenceLog: evidence.map((e) => ({
+        id: e.id,
+        panel: e.panel,
+        reference: e.reference,
+        studentNote: e.student_note,
+      })),
+      currentStep: inv.current_step || 1,
+      submissionStatus: inv.submission_status || "rascunho",
+      submittedAt: inv.submitted_at,
+      teacherFeedback: inv.teacher_feedback || "",
+      reviewedAt: inv.reviewed_at,
+    });
+    return state;
+  }
+
+  /** Salva os campos simples da investigação no Supabase (com debounce). */
+  function saveState(showToast) {
+    const el = document.getElementById("save-indicator");
+    if (el) el.textContent = "Salvando…";
+
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+      if (!state.investigationId) return;
+      try {
+        await window.LagamarAPI.investigations.update(state.investigationId, {
+          analysis_round: state.analysisRound ? Number(state.analysisRound) : null,
+          activity_number: state.activityNumber ? Number(state.activityNumber) : null,
+          activity_name: state.activityName,
+          scenario: state.scenario,
+          task_division: state.taskDivision,
+          materials: state.materials,
+          materials_accessible: state.materialsAccessible,
+          raw_data: state.rawData,
+          questions: state.questions,
+          consultancy_notes: state.consultancyNotes,
+          patterns: state.patterns,
+          observations: state.observations,
+          hypothesis: state.hypothesis,
+          supporting_evidence: state.supportingEvidence,
+          limiting_evidence: state.limitingEvidence,
+          analytical_limits: state.analyticalLimits,
+          work_bridge: state.workBridge,
+          headline: state.headline,
+          new_question: state.newQuestion,
+          next_step: state.nextStep,
+          current_step: state.currentStep,
+        });
+        if (el) el.textContent = "Salvo na nuvem · " + new Date().toLocaleTimeString("pt-BR");
+        if (showToast) toast("Rascunho salvo.");
+      } catch (e) {
+        if (el) el.textContent = "Não foi possível salvar agora. Verifique a internet.";
+        console.error("Erro ao salvar:", e);
+      }
+    }, 600); // debounce: evita 1 chamada de rede por tecla digitada
+  }
+
+  function toast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => t.classList.remove("show"), 2400);
+  }
+
+  // -----------------------------------------------------------------
+  // Submissão para aprovação — agora via Supabase (compartilhado com
+  // o professor em tempo real, mesmo em computadores diferentes)
+  // -----------------------------------------------------------------
+  async function submitForApproval() {
+    const missing = missingEssentials();
+    if (missing.length > 0) {
+      toast(`Antes de enviar: complete → ${missing[0].label}`);
+      renderCompleteness();
+      return false;
+    }
+
+    const md = buildReportMarkdown();
+    try {
+      const { investigation } = await window.LagamarAPI.submissions.submit(state.investigationId, md);
+      state.submissionStatus = investigation.submission_status;
+      state.submittedAt = investigation.submitted_at;
+      state.teacherFeedback = "";
+      state._lastReport = md;
+      return true;
+    } catch (e) {
+      toast("Não foi possível enviar. Verifique a internet e tente novamente.");
+      console.error(e);
+      return false;
+    }
+  }
+
+  /** Recarrega o status de aprovação direto do banco (o professor pode ter
+   *  aprovado/pedido revisão a qualquer momento, de outro computador). */
+  async function syncSubmissionStatus() {
+    if (!state.investigationId) return;
+    try {
+      const inv = await window.LagamarAPI.investigations.getActiveForGroup(state.groupId);
+      if (!inv) return;
+      if (inv.submission_status !== state.submissionStatus || inv.teacher_feedback !== state.teacherFeedback) {
+        state.submissionStatus = inv.submission_status;
+        state.teacherFeedback = inv.teacher_feedback || "";
+        state.reviewedAt = inv.reviewed_at;
+      }
+    } catch (e) {
+      console.warn("Não foi possível sincronizar status de aprovação:", e);
+    }
+  }
+
+  // -----------------------------------------------------------------
+  // Badges de procedência
+  // -----------------------------------------------------------------
+  function provenanceBadge(prov) {
+    const map = {
+      campo: ["DADO DE CAMPO", "badge-campo"],
+      caderno: ["CADERNO DE CAMPO", "badge-caderno"],
+      "contexto-didatico": ["CONTEXTO DIDÁTICO", "badge-contexto"],
+      exemplo: ["EXEMPLO DIDÁTICO", "badge-exemplo"],
+      "nao-fornecido": ["DADO NÃO DISPONÍVEL", "badge-ausente"],
+    };
+    const [label, cls] = map[prov] || map["nao-fornecido"];
+    return `<span class="badge ${cls}">${label}</span>`;
+  }
+
+  // -----------------------------------------------------------------
+  // Acesso ao modo professor (protegido por senha simples)
+  // -----------------------------------------------------------------
+  // Tela inicial: seleção de turma → grupo (substitui o antigo hero
+  // com "Começar investigação" — agora o acesso é por clique no card
+  // do grupo, sem digitar nome).
+  // -----------------------------------------------------------------
+  function initHero() {
+    document.getElementById("btn-teacher-mode").addEventListener("click", () => {
+      window.location.href = "professor.html";
+    });
+
+    const resumedGroupId = window.LagamarSession.getActiveGroupId();
+    if (resumedGroupId) {
+      showResumeStep(resumedGroupId);
+    } else {
+      showClassStep();
+    }
+
+    document.getElementById("btn-back-to-class").addEventListener("click", showClassStep);
+    document.getElementById("btn-switch-group").addEventListener("click", () => {
+      window.LagamarSession.clearActiveGroup();
+      showClassStep();
+    });
+  }
+
+  async function showClassStep() {
+    document.getElementById("access-step-resume").style.display = "none";
+    document.getElementById("access-step-group").style.display = "none";
+    document.getElementById("access-step-class").style.display = "block";
+    document.getElementById("access-step-class-actions").style.display = "flex";
+
+    const grid = document.getElementById("class-select-grid");
+    grid.innerHTML = '<div class="access-loading">Carregando turmas…</div>';
+    try {
+      const classes = await window.LagamarAPI.classesGroups.listClasses();
+      grid.innerHTML = "";
+      classes.forEach((c) => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "access-card class-card";
+        card.innerHTML = `<span class="access-card-icon">🏫</span>
+          <div class="access-card-title">${escapeHtml(c.name)}</div>
+          <div class="access-card-sub">Turma</div>`;
+        card.addEventListener("click", () => showGroupStep(c));
+        grid.appendChild(card);
+      });
+    } catch (e) {
+      grid.innerHTML = `<div class="access-error">Não foi possível carregar as turmas. Verifique sua conexão com a internet e recarregue a página.</div>`;
+    }
+  }
+
+  async function showGroupStep(classInfo) {
+    document.getElementById("access-step-class").style.display = "none";
+    document.getElementById("access-step-class-actions").style.display = "none";
+    document.getElementById("access-step-group").style.display = "block";
+
+    const grid = document.getElementById("group-select-grid");
+    grid.innerHTML = '<div class="access-loading">Carregando grupos…</div>';
+    try {
+      const groups = await window.LagamarAPI.classesGroups.listGroupsByClass(classInfo.id);
+      grid.innerHTML = "";
+      groups.forEach((g) => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "access-card";
+        card.innerHTML = `<span class="access-card-icon">👥</span>
+          <div class="access-card-title">${escapeHtml(g.display_name)}</div>
+          <div class="access-card-sub">${escapeHtml(classInfo.short_code)}</div>`;
+        card.addEventListener("click", () => selectGroupAndEnter(g, classInfo));
+        grid.appendChild(card);
+      });
+    } catch (e) {
+      grid.innerHTML = `<div class="access-error">Não foi possível carregar os grupos. Tente novamente.</div>`;
+    }
+  }
+
+  async function selectGroupAndEnter(group, classInfo) {
+    window.LagamarSession.setActiveGroupId(group.id);
+    state.groupName = group.display_name;
+    state.className = classInfo.short_code;
+    await enterAppForGroup(group.id);
+  }
+
+  async function showResumeStep(groupId) {
+    document.getElementById("access-step-class").style.display = "none";
+    document.getElementById("access-step-class-actions").style.display = "none";
+    document.getElementById("access-step-resume").style.display = "block";
+
+    try {
+      const group = await window.LagamarAPI.classesGroups.getGroupById(groupId);
+      if (!group) {
+        // Grupo não existe mais (banco pode ter sido reiniciado) — recomeça o fluxo.
+        window.LagamarSession.clearActiveGroup();
+        showClassStep();
+        return;
+      }
+      document.getElementById("resume-group-name").textContent =
+        `${group.display_name} — ${group.classes?.short_code || ""}`;
+      document.getElementById("btn-resume-start").onclick = () => enterAppForGroup(groupId);
+    } catch (e) {
+      document.getElementById("access-step-resume").innerHTML =
+        '<div class="access-error">Não foi possível verificar seu grupo. Verifique a internet e recarregue a página.</div>';
+    }
+  }
+
+  async function enterAppForGroup(groupId) {
+    document.getElementById("hero").classList.add("hidden");
+    document.getElementById("app-shell").classList.add("active");
+    toast("Carregando investigação do grupo…");
+    try {
+      await loadStateFromSupabase(groupId);
+      const group = await window.LagamarAPI.classesGroups.getGroupById(groupId);
+      state.groupName = group?.display_name || state.groupName;
+      state.className = group?.classes?.short_code || state.className;
+      renderAll();
+    } catch (e) {
+      console.error(e);
+      toast("Erro ao carregar a investigação. Recarregue a página.");
+    }
+  }
+
+  /** Encerra a sessão de trabalho e volta para a tela inicial. Mantém a
+   *  sessão do grupo salva (não desloga) — ao reabrir, a tela de "resume"
+   *  aparece de novo, permitindo continuar ou trocar de grupo. */
+  function returnToHome() {
+    document.getElementById("app-shell").classList.remove("active");
+    document.getElementById("hero").classList.remove("hidden");
+    const groupId = window.LagamarSession.getActiveGroupId();
+    if (groupId) {
+      showResumeStep(groupId);
+    } else {
+      showClassStep();
+    }
+    toast("Investigação salva. Até a próxima!");
+  }
+
+  // -----------------------------------------------------------------
+  // Progress rail + navegação de etapas
+  // -----------------------------------------------------------------
+  const STEP_LABELS = [
+    "Identificação", "Memória", "Passando a limpo", "Laboratório",
+    "Especialistas", "Lupa analítica", "Ponte c/ trabalho", "Síntese", "Revisão",
+  ];
+
+  function renderProgressRail() {
+    const rail = document.getElementById("progress-rail");
+    rail.innerHTML = "";
+    for (let i = 1; i <= TOTAL_STEPS; i++) {
+      const btn = document.createElement("button");
+      btn.className = "progress-step" + (i === state.currentStep ? " current" : i < state.currentStep ? " done" : "");
+      btn.textContent = `${i}. ${STEP_LABELS[i - 1]}`;
+      btn.addEventListener("click", () => goToStep(i));
+      rail.appendChild(btn);
+    }
+  }
+
+  async function goToStep(n) {
+    state.currentStep = Math.min(Math.max(n, 1), TOTAL_STEPS);
+    document.querySelectorAll(".step-panel").forEach((p) => {
+      p.style.display = Number(p.dataset.step) === state.currentStep ? "block" : "none";
+    });
+    renderProgressRail();
+    document.getElementById("btn-prev-step").disabled = state.currentStep === 1;
+    document.getElementById("btn-next-step").textContent =
+      state.currentStep === TOTAL_STEPS ? "Concluir ✓" : "Avançar →";
+    if (state.currentStep === 9) {
+      renderCompleteness();
+      await syncSubmissionStatus();
+      renderSubmissionPanel();
+      if (state._lastReport) renderReportPreviewDocument(state._lastReport);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    saveState(false);
+  }
+
+  // -----------------------------------------------------------------
+  // Etapa 1 — Identificação
+  // -----------------------------------------------------------------
+  function initStep1() {
+    const activitySelect = document.getElementById("f-activityNumber");
+    D.FIELD_ACTIVITIES.forEach((a) => {
+      const opt = document.createElement("option");
+      opt.value = a.number;
+      opt.textContent = `${a.number} — ${a.name}`;
+      activitySelect.appendChild(opt);
+    });
+
+    bindSelect("f-analysisRound", "analysisRound", (val) => {
+      // Ao trocar a rodada, sugere (mas não força) atividades daquela rodada
+      const round = D.ANALYSIS_ROUNDS[val];
+      if (round) {
+        toast(`Dica: a ${round.label.toLowerCase()} é sugerida para esta rodada.`);
+      }
+    });
+    bindSelect("f-activityNumber", "activityNumber", (val) => {
+      const found = D.FIELD_ACTIVITIES.find((a) => String(a.number) === String(val));
+      state.activityName = found ? found.name : "";
+      document.getElementById("f-activityName").value = state.activityName;
+      updateTopbarMeta();
+      saveState(false);
+    });
+  }
+
+  // -----------------------------------------------------------------
+  // Etapa 2 — Memória de campo
+  // -----------------------------------------------------------------
+  function initStep2() {
+    bindText("f-scenario", "scenario");
+    bindText("f-taskDivision", "taskDivision");
+
+    document.querySelectorAll("#materials-checklist input").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const checked = Array.from(document.querySelectorAll("#materials-checklist input:checked")).map((c) => c.value);
+        state.materials = checked;
+        saveState(false);
+      });
+    });
+
+    document.querySelectorAll('input[name="materialsAccessible"]').forEach((r) => {
+      r.addEventListener("change", (e) => {
+        state.materialsAccessible = e.target.value;
+        saveState(false);
+      });
+    });
+  }
+
+  function hydrateStep2() {
+    document.querySelectorAll("#materials-checklist input").forEach((cb) => {
+      cb.checked = state.materials.includes(cb.value);
+    });
+    document.querySelectorAll('input[name="materialsAccessible"]').forEach((r) => {
+      r.checked = r.value === state.materialsAccessible;
+    });
+  }
+
+  // -----------------------------------------------------------------
+  // Etapa 3 — Passando a limpo (tabela editável)
+  // -----------------------------------------------------------------
+  const TABLE_COLUMNS = ["Local", "Variável", "Valor", "Unidade", "Observação"];
+
+  function initStep3() {
+    bindText("f-rawData", "rawData");
+    document.getElementById("btn-add-row").addEventListener("click", async () => {
+      try {
+        const newCells = TABLE_COLUMNS.map(() => "");
+        const saved = await window.LagamarAPI.tableRows.add(state.investigationId, newCells, state.tableRows.length);
+        state.tableRows.push({ id: saved.id, cells: saved.cells });
+        renderEditableTable();
+      } catch (e) {
+        toast("Não foi possível adicionar a linha. Verifique a internet.");
+      }
+    });
+    renderEditableTable();
+  }
+
+  function renderEditableTable() {
+    const wrap = document.getElementById("editable-table-wrap");
+    if (state.tableRows.length === 0) {
+      wrap.innerHTML = '<p class="data-missing">Nenhuma linha adicionada. Clique em "Adicionar linha" para começar a tabela do grupo.</p>';
+      return;
+    }
+    let html = '<table class="data-table"><thead><tr>';
+    TABLE_COLUMNS.forEach((c) => (html += `<th>${c}</th>`));
+    html += "<th></th></tr></thead><tbody>";
+    state.tableRows.forEach((row) => {
+      html += "<tr>";
+      row.cells.forEach((cell, ci) => {
+        html += `<td><input type="text" data-row-id="${row.id}" data-col="${ci}" value="${escapeHtml(cell)}" style="border:none; background:transparent; padding:4px; width:100%;" /></td>`;
+      });
+      html += `<td><button class="icon-btn" data-remove-row-id="${row.id}" type="button" style="padding:4px 8px;">✕</button></td>`;
+      html += "</tr>";
+    });
+    html += "</tbody></table>";
+    wrap.innerHTML = html;
+
+    let rowSaveTimer = null;
+    wrap.querySelectorAll("input[data-row-id]").forEach((inp) => {
+      inp.addEventListener("input", (e) => {
+        const rowId = e.target.dataset.rowId;
+        const col = Number(e.target.dataset.col);
+        const row = state.tableRows.find((r) => r.id === rowId);
+        if (row) row.cells[col] = e.target.value;
+
+        clearTimeout(rowSaveTimer);
+        rowSaveTimer = setTimeout(async () => {
+          try {
+            await window.LagamarAPI.tableRows.update(rowId, row.cells);
+          } catch (err) {
+            toast("Não foi possível salvar a linha. Verifique a internet.");
+          }
+        }, 600);
+      });
+    });
+    wrap.querySelectorAll("[data-remove-row-id]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const rowId = btn.dataset.removeRowId;
+        try {
+          await window.LagamarAPI.tableRows.remove(rowId);
+          state.tableRows = state.tableRows.filter((r) => r.id !== rowId);
+          renderEditableTable();
+        } catch (e) {
+          toast("Não foi possível remover a linha. Verifique a internet.");
+        }
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
+
+  // -----------------------------------------------------------------
+  // Etapa 4 — Painéis investigativos
+  // -----------------------------------------------------------------
+  function initStep4() {
+    document.querySelectorAll(".panel-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".panel-tab").forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentPanel = tab.dataset.panel;
+        renderPanelContent();
+      });
+    });
+    renderPanelContent();
+  }
+
+  function renderPanelContent() {
+    const el = document.getElementById("panel-content");
+    if (currentPanel === "fisico-sonoro") return (el.innerHTML = "", renderPanelFisicoSonoro(el));
+    if (currentPanel === "hidrodinamica") return (el.innerHTML = "", renderPanelHidrodinamica(el));
+    if (currentPanel === "ecossistemas") return (el.innerHTML = "", renderPanelEcossistemas(el));
+    if (currentPanel === "trabalho") return (el.innerHTML = "", renderPanelTrabalho(el));
+  }
+
+  // --- Painel 1 ---
+  let selectedStations = ["valo-grande", "ilha-cardoso"];
+  function renderPanelFisicoSonoro(el) {
+    const P = D.PANEL_FISICO_SONORO;
+    let html = `
+      <div class="card">
+        <h3>O ambiente está em equilíbrio?</h3>
+        <p class="card-sub">Selecione estações para comparar ruído (dB), luminosidade e temperatura. ${provenanceBadge(P.provenance)}</p>
+        <p class="provenance-note">Fonte: ${P.source}</p>
+        <div class="station-grid" id="station-grid"></div>
+        <div id="panel1-photos"></div>
+        <h4 style="margin-top:20px; font-family:var(--font-display);">Comparação — Ruído (dB)</h4>
+        <div class="bar-chart" id="bar-chart-noise"></div>
+        <details style="margin-top:14px;"><summary>Ver tabela alternativa</summary><div id="alt-table-1"></div></details>
+        <ul class="socratic-list">
+          <li>O que você observa primeiro na curva ou na tabela?</li>
+          <li>Qual estação apresenta maior variação?</li>
+          <li>Que relação você imagina entre cobertura vegetal, urbanização, sedimentos, luz, ruído e temperatura?</li>
+          <li>Qual dado adicional seria necessário para sustentar uma explicação mais forte?</li>
+        </ul>
+        <div class="evidence-editor">
+          <textarea placeholder="Sua interpretação sobre esta comparação..." id="ev-note-1"></textarea>
+          <button class="btn-secondary" id="btn-add-ev-1" type="button">+ Adicionar evidência</button>
+        </div>
+      </div>`;
+    el.innerHTML = html;
+
+    const grid = document.getElementById("station-grid");
+    P.stations.forEach((s) => {
+      const card = document.createElement("div");
+      card.className = "station-card" + (selectedStations.includes(s.id) ? " selected" : "");
+      card.innerHTML = `<h4>${s.name}</h4>
+        <div class="metric-row"><span>Ruído</span><span class="metric-value">${fmtMetric(s.data.ruido_db)}</span></div>
+        <div class="metric-row"><span>Luminosidade</span><span class="metric-value">${fmtMetric(s.data.luminosidade_pct)}</span></div>
+        <div class="metric-row"><span>Temperatura</span><span class="metric-value">${fmtMetric(s.data.temperatura_c)}</span></div>
+        <p class="provenance-note">${s.note}</p>`;
+      card.addEventListener("click", () => {
+        if (selectedStations.includes(s.id)) {
+          selectedStations = selectedStations.filter((x) => x !== s.id);
+        } else if (selectedStations.length < 3) {
+          selectedStations.push(s.id);
+        }
+        renderPanelFisicoSonoro(el);
+      });
+      grid.appendChild(card);
+    });
+
+    loadPhotosForSelection("fisico-sonoro", selectedStations, "panel1-photos", "Selecione uma estação acima para ver fotos reais do local");
+
+    renderBarChart(
+      "bar-chart-noise",
+      P.stations.filter((s) => selectedStations.includes(s.id)),
+      (s) => s.data.ruido_db,
+      (s) => s.name
+    );
+    renderAltTable("alt-table-1", ["Estação", "Ruído (dB)", "Luminosidade", "Temperatura", "Procedência"],
+      P.stations.map((s) => [s.name, fmtMetric(s.data.ruido_db), fmtMetric(s.data.luminosidade_pct), fmtMetric(s.data.temperatura_c), s.data.ruido_db.provenance])
+    );
+
+    document.getElementById("btn-add-ev-1").addEventListener("click", () => {
+      addEvidence("fisico-sonoro", `Estações: ${selectedStations.join(", ")}`, document.getElementById("ev-note-1").value);
+    });
+  }
+
+  /** Busca e renderiza fotos reais para uma seleção de location_keys
+   *  dentro de um painel. Reutilizada pelos 4 painéis investigativos. */
+  async function loadPhotosForSelection(panel, locationKeys, containerId, emptyLabel) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (!locationKeys || locationKeys.length === 0) {
+      window.LagamarUI.photoGallery.render(container, [], emptyLabel);
+      return;
+    }
+    try {
+      const all = await window.LagamarAPI.locationPhotos.listForPanel(panel);
+      const filtered = all.filter((p) => locationKeys.includes(p.location_key));
+      window.LagamarUI.photoGallery.render(container, filtered, "Fotos deste local ainda não foram adicionadas pelo professor");
+    } catch (e) {
+      console.warn("Não foi possível carregar fotos:", e);
+      window.LagamarUI.photoGallery.render(container, [], "Não foi possível carregar as fotos agora");
+    }
+  }
+
+  function fmtMetric(m) {
+    if (!m || m.value === null || m.value === undefined) return "—";
+    return `${m.value} ${m.unit || ""}`.trim();
+  }
+
+  function renderBarChart(elId, items, getMetric, getLabel) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (items.length === 0) {
+      el.innerHTML = '<p class="data-missing">Selecione ao menos uma estação/local para comparar.</p>';
+      return;
+    }
+    const max = Math.max(...items.map((i) => getMetric(i).value || 0), 1);
+    el.innerHTML = items
+      .map((i) => {
+        const m = getMetric(i);
+        const hasValue = m && m.value !== null && m.value !== undefined;
+        const h = hasValue ? Math.max((m.value / max) * 100, 4) : 0;
+        return `<div class="bar-col">
+          <span class="bar-value">${hasValue ? m.value : "s/ dado"}</span>
+          <div class="bar" style="height:${h}%;" role="img" aria-label="${getLabel(i)}: ${hasValue ? m.value + (m.unit || "") : "dado não disponível"}"></div>
+          <span class="bar-label">${getLabel(i)}</span>
+        </div>`;
+      })
+      .join("");
+  }
+
+  function renderAltTable(elId, headers, rows) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    let html = '<table class="data-table"><thead><tr>' + headers.map((h) => `<th>${h}</th>`).join("") + "</tr></thead><tbody>";
+    rows.forEach((r) => {
+      html += "<tr>" + r.map((c) => `<td>${c}</td>`).join("") + "</tr>";
+    });
+    html += "</tbody></table>";
+    el.innerHTML = html;
+  }
+
+  // --- Painel 2 ---
+  function renderPanelHidrodinamica(el) {
+    const P = D.PANEL_HIDRODINAMICA;
+    let html = `
+      <div class="card">
+        <h3>Que água circula por aqui?</h3>
+        <p class="card-sub">Compare o Ponto A (Iguape) e o Ponto B (Cananéia). ${provenanceBadge("caderno")}</p>
+        <div class="station-grid">`;
+    P.points.forEach((pt) => {
+      const hasReal = pt.salinity.value !== null;
+      const displayVal = hasReal ? pt.salinity : pt.salinityExample;
+      html += `<div class="station-card">
+        <h4>${pt.name}</h4>
+        <div class="metric-row"><span>Salinidade</span><span class="metric-value">${fmtMetric(displayVal)}</span></div>
+        <p>${provenanceBadge(hasReal ? "campo" : "exemplo")}</p>
+        <p class="provenance-note">${pt.planktonNote}</p>
+        <p class="provenance-note">Fonte: ${pt.source}</p>
+      </div>`;
+    });
+    html += `</div>
+      <div id="panel2-photos"></div>
+      <h4 style="margin-top:20px; font-family:var(--font-display);">Escala teórica de referência (${provenanceBadge("contexto-didatico")})</h4>
+      <div class="bar-chart">
+        <div class="bar-col"><span class="bar-value">0 g/L</span><div class="bar" style="height:6%;"></div><span class="bar-label">Água doce</span></div>
+        <div class="bar-col"><span class="bar-value">36 g/L</span><div class="bar" style="height:100%;"></div><span class="bar-label">Água do mar</span></div>
+      </div>
+      <p class="provenance-note">${P.theoreticalScale.note} Fonte: ${P.theoreticalScale.source}</p>
+      <div class="warning-box">O controle de "proximidade do Valo Grande", se usado em sala, é uma <strong>simulação didática</strong> — não uma medição contínua.</div>
+      <ul class="socratic-list">
+        <li>O que muda entre os pontos A e B?</li>
+        <li>Qual variável apresenta a diferença mais evidente?</li>
+        <li>Essa comparação mostra uma causa, uma associação ou apenas uma diferença entre locais?</li>
+        <li>Que outras coletas seriam necessárias para generalizar o resultado?</li>
+      </ul>
+      <div class="evidence-editor">
+        <textarea placeholder="Sua interpretação sobre esta comparação..." id="ev-note-2"></textarea>
+        <button class="btn-secondary" id="btn-add-ev-2" type="button">+ Adicionar evidência</button>
+      </div>
+    </div>`;
+    el.innerHTML = html;
+    loadPhotosForSelection("hidrodinamica", ["ponto-a", "ponto-b"], "panel2-photos", "Fotos dos pontos de coleta ainda não foram adicionadas");
+    document.getElementById("btn-add-ev-2").addEventListener("click", () => {
+      addEvidence("hidrodinamica", "Comparação Ponto A x Ponto B", document.getElementById("ev-note-2").value);
+    });
+  }
+
+  // --- Painel 3 ---
+  let selectedBiome = "manguezal";
+  function renderPanelEcossistemas(el) {
+    const P = D.PANEL_ECOSSISTEMAS;
+    let tabs = P.biomes.map((b) => `<button class="panel-tab ${b.id === selectedBiome ? "active" : ""}" data-biome="${b.id}" type="button">${b.name}</button>`).join("");
+    const biome = P.biomes.find((b) => b.id === selectedBiome);
+
+    let html = `
+      <div class="card">
+        <h3>Como a vida se adapta ao lugar?</h3>
+        <p class="card-sub">Alterne entre manguezal, restinga e Mata Atlântica de encosta.</p>
+        <div class="panel-tabs">${tabs}</div>
+        <div class="two-col">
+          <div>
+            <h4 style="font-family:var(--font-display);">Solo</h4>
+            <div class="metric-row"><span>Textura</span><span class="metric-value">${biome.soil.texture.value || "Dado não disponível"}</span></div>
+            <div class="metric-row"><span>Umidade</span><span class="metric-value">${biome.soil.moisture.value || "Dado não disponível"}</span></div>
+            <div class="metric-row"><span>Resistência à penetração</span><span class="metric-value">${biome.penetrationDepthCm.value !== null ? biome.penetrationDepthCm.value + " cm" : biome.penetrationExampleCm.value + " cm"}</span></div>
+            <p>${provenanceBadge(biome.penetrationDepthCm.value !== null ? "campo" : "exemplo")}</p>
+            <div class="metric-row"><span>Altura Dominante (Hd)</span><span class="metric-value">${biome.dominantHeight.value !== null ? biome.dominantHeight.value + " m" : "Dado não disponível"}</span></div>
+            <p>${provenanceBadge("nao-fornecido")}</p>
+          </div>
+          <div>
+            <h4 style="font-family:var(--font-display);">Adaptações morfológicas registradas</h4>
+            ${biome.adaptations.length === 0 ? '<p class="data-missing">Nenhuma adaptação morfológica específica documentada para este bioma nos arquivos fornecidos.</p>' : biome.adaptations.map((a) => `
+              <div class="station-card" style="margin-bottom:8px;">
+                <strong>${a.name}</strong> <span class="provenance-note">(${a.species})</span>
+                <p class="provenance-note">Função: ${a.function} — ${a.justification}</p>
+                ${provenanceBadge(a.provenance)}
+              </div>`).join("")}
+          </div>
+        </div>
+        <p class="provenance-note" style="margin-top:12px;">Fonte: ${biome.source}. Método: ${P.method.penetration}</p>
+        <div id="panel3-photos"></div>
+        <ul class="socratic-list">
+          <li>Qual ambiente apresenta maior ou menor resistência à penetração?</li>
+          <li>Como umidade e textura podem ajudar a interpretar a sustentação das plantas?</li>
+          <li>O que é dado observado e o que é explicação do grupo?</li>
+        </ul>
+        <div class="evidence-editor">
+          <textarea placeholder="Sua interpretação sobre este bioma..." id="ev-note-3"></textarea>
+          <button class="btn-secondary" id="btn-add-ev-3" type="button">+ Adicionar evidência</button>
+        </div>
+      </div>`;
+    el.innerHTML = html;
+    loadPhotosForSelection("ecossistemas", [selectedBiome], "panel3-photos", `Fotos do ${biome.name.toLowerCase()} ainda não foram adicionadas`);
+
+    el.querySelectorAll("[data-biome]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedBiome = btn.dataset.biome;
+        renderPanelEcossistemas(el);
+      });
+    });
+    document.getElementById("btn-add-ev-3").addEventListener("click", () => {
+      addEvidence("ecossistemas", `Bioma: ${biome.name}`, document.getElementById("ev-note-3").value);
+    });
+  }
+
+  // --- Painel 4 ---
+  function renderPanelTrabalho(el) {
+    const P = D.PANEL_TRABALHO;
+    let html = `
+      <div class="card">
+        <h3>Como ambiente e trabalho se transformam juntos?</h3>
+        <p class="card-sub">Compare a pesca artesanal em Iguape e Cananéia, e as práticas do Quilombo do Mandira.</p>
+        <div class="two-col">
+          <div class="station-card">
+            <h4>${P.fishing.iguape.name}</h4>
+            <p class="data-missing">${P.fishing.iguape.note}</p>
+            <p class="provenance-note">Campos do formulário: ${P.fishing.iguape.fields.join(", ")}</p>
+            ${provenanceBadge("nao-fornecido")}
+          </div>
+          <div class="station-card">
+            <h4>${P.fishing.cananeia.name}</h4>
+            <p class="data-missing">${P.fishing.cananeia.note}</p>
+            <p class="provenance-note">Campos do formulário: ${P.fishing.cananeia.fields.join(", ")}</p>
+            ${provenanceBadge("nao-fornecido")}
+          </div>
+        </div>
+        <h4 style="margin-top:20px; font-family:var(--font-display);">${P.mandira.name}</h4>
+        <table class="data-table">
+          <thead><tr><th>Informação</th><th>Registro</th><th>Procedência</th></tr></thead>
+          <tbody>
+            ${P.mandira.facts.map((f) => `<tr><td>${f.label}</td><td>${f.value}</td><td>${provenanceBadge(f.provenance)}</td></tr>`).join("")}
+          </tbody>
+        </table>
+        <p class="provenance-note" style="margin-top:10px;">Campos ainda não preenchidos neste protótipo: ${P.mandira.unfilledFields.join(", ")}. ${provenanceBadge("nao-fornecido")}</p>
+        <p class="provenance-note">Fonte: ${P.mandira.source}</p>
+        <div id="panel4-photos"></div>
+        <div class="warning-box">Não há pares numéricos suficientes documentados para calcular uma correlação estatística entre técnica de pesca, potência do motor e valor de venda. Um gráfico de dispersão aqui seria uma correlação artificial — por isso mostramos apenas tabelas qualitativas.</div>
+        <ul class="socratic-list">
+          <li>Que diferenças aparecem entre as formas de trabalho observadas?</li>
+          <li>Como tecnologia, organização coletiva e saberes tradicionais aparecem na investigação?</li>
+          <li>Quem realiza o trabalho e quem se beneficia dele, de acordo com os registros?</li>
+        </ul>
+        <div class="evidence-editor">
+          <textarea placeholder="Sua interpretação sobre o Mundo do Trabalho no Lagamar..." id="ev-note-4"></textarea>
+          <button class="btn-secondary" id="btn-add-ev-4" type="button">+ Adicionar evidência</button>
+        </div>
+      </div>`;
+    el.innerHTML = html;
+    loadPhotosForSelection("trabalho", ["pesca-iguape", "pesca-cananeia", "ostras-mandira"], "panel4-photos", "Fotos do trabalho no Lagamar ainda não foram adicionadas");
+    document.getElementById("btn-add-ev-4").addEventListener("click", () => {
+      addEvidence("trabalho", "Mundo do Trabalho — Iguape/Cananéia/Mandira", document.getElementById("ev-note-4").value);
+    });
+  }
+
+  // -----------------------------------------------------------------
+  // Caderno de Evidências (persistido no Supabase)
+  // -----------------------------------------------------------------
+  async function addEvidence(panel, reference, note) {
+    if (!note || !note.trim()) {
+      toast("Escreva sua interpretação antes de adicionar a evidência.");
+      return;
+    }
+    try {
+      const saved = await window.LagamarAPI.evidenceLog.add(state.investigationId, panel, reference, note.trim());
+      state.evidenceLog.push({
+        id: saved.id,
+        panel: saved.panel,
+        reference: saved.reference,
+        studentNote: saved.student_note,
+      });
+      renderEvidenceDrawer();
+      toast("Evidência adicionada ao Caderno.");
+    } catch (e) {
+      toast("Não foi possível salvar a evidência. Verifique a internet.");
+    }
+  }
+
+  function renderEvidenceDrawer() {
+    document.getElementById("evidence-count").textContent = state.evidenceLog.length;
+    const list = document.getElementById("evidence-list");
+    if (state.evidenceLog.length === 0) {
+      list.innerHTML = '<p class="hint">Nenhuma evidência registrada ainda. Ao explorar os painéis, clique em "Adicionar evidência" para guardar aqui uma observação, um dado ou uma comparação — sempre com sua própria interpretação.</p>';
+      return;
+    }
+    list.innerHTML = state.evidenceLog
+      .map(
+        (ev) => `<div class="evidence-item">
+          <button class="ev-remove" data-remove-ev="${ev.id}" type="button" aria-label="Remover evidência">✕</button>
+          <div class="ev-meta">${ev.panel} · ${ev.reference}</div>
+          <div>${escapeHtml(ev.studentNote)}</div>
+        </div>`
+      )
+      .join("");
+    list.querySelectorAll("[data-remove-ev]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.removeEv;
+        try {
+          await window.LagamarAPI.evidenceLog.remove(id);
+          state.evidenceLog = state.evidenceLog.filter((e) => e.id !== id);
+          renderEvidenceDrawer();
+        } catch (e) {
+          toast("Não foi possível remover. Verifique a internet.");
+        }
+      });
+    });
+  }
+
+  // -----------------------------------------------------------------
+  // Painel de Aprovações (visão do professor)
+  // -----------------------------------------------------------------
+  // -----------------------------------------------------------------
+  // Etapas 5–8 — binds diretos
+  // -----------------------------------------------------------------
+  function initStep5() {
+    bindText("f-question1", null, (v) => (state.questions[0] = v));
+    bindText("f-question2", null, (v) => (state.questions[1] = v));
+    bindText("f-question3", null, (v) => (state.questions[2] = v));
+    bindText("f-consultancyNotes", "consultancyNotes");
+  }
+
+  function initStep6() {
+    ["patterns", "observations", "hypothesis", "supportingEvidence", "limitingEvidence", "analyticalLimits"].forEach((f) =>
+      bindText("f-" + f, f)
+    );
+  }
+
+  function initStep7() {
+    bindText("f-workBridge", "workBridge");
+  }
+
+  function initStep8() {
+    bindText("f-headline", "headline");
+    bindText("f-newQuestion", "newQuestion");
+    bindText("f-nextStep", "nextStep");
+  }
+
+  // -----------------------------------------------------------------
+  // Etapa 9 — Revisão, completude e relatório
+  // -----------------------------------------------------------------
+  const COMPLETENESS_CHECKS = [
+    { key: "groupName", label: "Nome do grupo preenchido" },
+    { key: "analysisRound", label: "Rodada de análise selecionada" },
+    { key: "activityNumber", label: "Atividade identificada" },
+    { key: "scenario", label: "Cenário de coleta descrito" },
+    { key: "rawData", label: "Dados brutos organizados" },
+    { key: "hypothesis", label: "Hipótese provisória registrada" },
+    { key: "workBridge", label: "Ponte com o Mundo do Trabalho escrita" },
+    { key: "headline", label: "Manchete/constatação escrita" },
+    { key: "newQuestion", label: "Nova questão motivadora registrada" },
+  ];
+
+  function renderCompleteness() {
+    const list = document.getElementById("completeness-list");
+    list.innerHTML = COMPLETENESS_CHECKS.map((c) => {
+      const ok = !!(state[c.key] && String(state[c.key]).trim());
+      return `<li><span class="dot ${ok ? "ok" : "pending"}"></span> ${c.label}</li>`;
+    }).join("");
+  }
+
+  function missingEssentials() {
+    return COMPLETENESS_CHECKS.filter((c) => !(state[c.key] && String(state[c.key]).trim()));
+  }
+
+  function buildReportMarkdown() {
+    const round = D.ANALYSIS_ROUNDS[state.analysisRound];
+    const nonEmptyRows = state.tableRows.filter((r) => r.cells.some((c) => c && c.trim()));
+    let tableMd = "";
+    if (nonEmptyRows.length) {
+      tableMd = "| " + TABLE_COLUMNS.join(" | ") + " |\n" + "|" + TABLE_COLUMNS.map(() => "---").join("|") + "|\n";
+      nonEmptyRows.forEach((r) => (tableMd += "| " + r.cells.join(" | ") + " |\n"));
+    }
+
+    return `# Relatório de Investigação — Lagamar Paulista
+
+## 1. Triagem e Memória de Campo
+- Grupo: ${state.groupName || "_não preenchido_"}
+- Rodada: ${state.analysisRound || "_não preenchido_"}${round ? " (" + round.label + ")" : ""}
+- Atividade: ${state.activityNumber ? state.activityNumber + " — " + state.activityName : "_não preenchido_"}
+- Cenário: ${state.scenario || "_não preenchido_"}
+- Divisão de tarefas: ${state.taskDivision || "_não preenchido_"}
+- Materiais disponíveis: ${state.materials.length ? state.materials.join(", ") : "_não preenchido_"}
+
+## 2. Dados organizados
+${state.rawData || "_não preenchido_"}
+
+${tableMd}
+
+## 3. Perguntas para especialistas
+1. ${state.questions[0] || "_não preenchido_"}
+2. ${state.questions[1] || "_não preenchido_"}
+3. ${state.questions[2] || "_não preenchido_"}
+
+Anotações da consultoria: ${state.consultancyNotes || "_não preenchido_"}
+
+## 4. Análise
+### Observações
+${state.observations || "_não preenchido_"}
+
+### Padrões e destaques
+${state.patterns || "_não preenchido_"}
+
+### Hipótese provisória
+${state.hypothesis || "_não preenchido_"}
+
+### Evidências que apoiam a hipótese
+${state.supportingEvidence || "_não preenchido_"}
+
+### Evidências que limitam ou não confirmam a hipótese
+${state.limitingEvidence || "_não preenchido_"}
+
+### Limites da análise
+${state.analyticalLimits || "_não preenchido_"}
+
+## 5. Ponte com o Mundo do Trabalho
+${state.workBridge || "_não preenchido_"}
+
+## 6. Síntese para a apresentação
+### Grande constatação/manchete
+${state.headline || "_não preenchido_"}
+
+### Nova questão motivadora
+${state.newQuestion || "_não preenchido_"}
+
+### Próximo passo ou proposta do grupo
+${state.nextStep || "_não preenchido_"}
+
+## Caderno de Evidências (${state.evidenceLog.length} registro(s))
+${state.evidenceLog.map((ev, i) => `${i + 1}. [${ev.panel}] ${ev.reference} — ${ev.studentNote}`).join("\n") || "_nenhuma evidência registrada_"}
+
+---
+*Relatório gerado por Lagamar Investiga. As interpretações e hipóteses acima são de autoria do grupo de estudantes e não foram validadas automaticamente pelo sistema.*
+`;
+  }
+
+  /** Renderiza a prévia do relatório como um documento formatado (mesmo
+   *  layout do PDF final), dentro de um iframe isolado. Chamada sempre
+   *  que o relatório é (re)gerado ou quando a Etapa 9 é revisitada com
+   *  um relatório já existente. */
+  function renderReportPreviewDocument(md) {
+    const container = document.getElementById("report-preview");
+    const html = markdownReportToDocumentHtml(md, state);
+    container.innerHTML = "";
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("title", "Prévia do relatório em formato de documento");
+    iframe.style.width = "100%";
+    iframe.style.height = "600px";
+    iframe.style.border = "1px solid var(--linha)";
+    iframe.style.borderRadius = "3px";
+    iframe.style.background = "white";
+    container.appendChild(iframe);
+    iframe.srcdoc = html;
+  }
+
+  function initStep9() {
+    document.getElementById("btn-generate-report").addEventListener("click", () => {
+      const missing = missingEssentials();
+      if (missing.length > 0) {
+        toast(`Antes de gerar: complete → ${missing[0].label}`);
+        renderCompleteness();
+        return;
+      }
+      const md = buildReportMarkdown();
+      state._lastReport = md;
+      renderReportPreviewDocument(md);
+      toast("Relatório gerado. Revise e, quando estiver pronto, envie para aprovação.");
+      renderSubmissionPanel();
+    });
+
+    document.getElementById("btn-copy-report").addEventListener("click", async () => {
+      const md = state._lastReport || buildReportMarkdown();
+      try {
+        await navigator.clipboard.writeText(md);
+        toast("Relatório copiado para a área de transferência.");
+      } catch (e) {
+        toast("Não foi possível copiar automaticamente. Selecione o texto manualmente.");
+      }
+    });
+
+    document.getElementById("btn-export-md").addEventListener("click", () => {
+      const md = state._lastReport || buildReportMarkdown();
+      downloadFile(`relatorio-${slug(state.groupName) || "grupo"}.md`, md, "text/markdown");
+    });
+
+    document.getElementById("btn-export-json").addEventListener("click", () => {
+      downloadFile(`investigacao-${slug(state.groupName) || "grupo"}.json`, JSON.stringify(state, null, 2), "application/json");
+    });
+
+    document.getElementById("btn-submit-approval").addEventListener("click", async () => {
+      const btn = document.getElementById("btn-submit-approval");
+      btn.disabled = true;
+      const ok = await submitForApproval();
+      btn.disabled = false;
+      if (ok) {
+        toast("Relatório enviado! Aguarde a aprovação do professor.");
+        renderSubmissionPanel();
+      }
+    });
+
+    document.getElementById("btn-export-pdf").addEventListener("click", () => {
+      openPdfPrintView();
+    });
+
+    renderSubmissionPanel();
+  }
+
+  // -----------------------------------------------------------------
+  // Painel de status da submissão (visão do aluno, dentro da Etapa 9)
+  // -----------------------------------------------------------------
+  function renderSubmissionPanel() {
+    const el = document.getElementById("submission-status-panel");
+    if (!el) return;
+
+    const statusMap = {
+      rascunho: { label: "Ainda não enviado", cls: "status-draft", desc: "Gere o relatório e clique em \"Enviar para aprovação do professor\" quando o grupo estiver satisfeito com o conteúdo." },
+      "aguardando-aprovacao": { label: "Aguardando aprovação do professor", cls: "status-pending", desc: "Seu relatório foi enviado e está na fila de revisão do professor. Você ainda pode continuar editando o rascunho, mas isso não altera automaticamente o que foi enviado — reenvie se quiser atualizar." },
+      aprovado: { label: "Aprovado ✓", cls: "status-approved", desc: "O professor aprovou este relatório. Agora você já pode exportar o PDF final." },
+      "revisao-solicitada": { label: "Revisão solicitada pelo professor", cls: "status-revision", desc: "O professor pediu ajustes. Veja o comentário abaixo, edite o que for necessário nas etapas anteriores e reenvie." },
+    };
+    const s = statusMap[state.submissionStatus] || statusMap.rascunho;
+
+    let html = `<div class="submission-badge ${s.cls}">${s.label}</div><p class="card-sub">${s.desc}</p>`;
+
+    if (state.submittedAt) {
+      html += `<p class="provenance-note">Enviado em: ${new Date(state.submittedAt).toLocaleString("pt-BR")}</p>`;
+    }
+    if (state.submissionStatus === "revisao-solicitada" && state.teacherFeedback) {
+      html += `<div class="warning-box"><strong>Comentário do professor:</strong> ${escapeHtml(state.teacherFeedback)}</div>`;
+    }
+    if (state.submissionStatus === "aprovado" && state.teacherFeedback) {
+      html += `<div class="warning-box" style="border-left-color:var(--junco); background:rgba(122,140,79,0.1); color:#3f4c26;"><strong>Comentário do professor:</strong> ${escapeHtml(state.teacherFeedback)}</div>`;
+    }
+
+    el.innerHTML = html;
+
+    // Botão de enviar: some quando já aprovado (não faz sentido reenviar)
+    const submitBtn = document.getElementById("btn-submit-approval");
+    submitBtn.style.display = state.submissionStatus === "aprovado" ? "none" : "inline-flex";
+    submitBtn.textContent = state.submissionStatus === "revisao-solicitada"
+      ? "Reenviar para aprovação"
+      : "Enviar para aprovação do professor";
+
+    // Botão de PDF: só habilitado quando aprovado
+    const pdfBtn = document.getElementById("btn-export-pdf");
+    pdfBtn.disabled = state.submissionStatus !== "aprovado";
+    pdfBtn.title = state.submissionStatus !== "aprovado"
+      ? "Disponível somente após a aprovação do professor"
+      : "Gerar PDF do relatório aprovado";
+  }
+
+  function slug(s) {
+    return (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  }
+
+  function downloadFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime + ";charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast("Arquivo exportado.");
+  }
+
+  // -----------------------------------------------------------------
+  // Geração de PDF (somente após aprovação do professor)
+  // -----------------------------------------------------------------
+  // Estratégia: sem backend disponível, a rota mais confiável e que
+  // funciona 100% offline é montar uma página HTML formatada para
+  // impressão e acionar window.print() — o usuário escolhe "Salvar
+  // como PDF" no diálogo de impressão do navegador. Isso evita
+  // dependências externas e funciona em qualquer navegador moderno.
+  function openPdfPrintView() {
+    if (state.submissionStatus !== "aprovado") {
+      toast("O PDF só fica disponível depois que o professor aprovar o relatório.");
+      return;
+    }
+    const md = state._lastReport || buildReportMarkdown();
+    const html = markdownReportToDocumentHtml(md, state);
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast("O navegador bloqueou a janela de impressão. Permita pop-ups para este site e tente novamente.");
+      return;
+    }
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    // Aguarda o layout carregar antes de abrir o diálogo de impressão.
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+  }
+
+  /** Converte o relatório em Markdown para um documento HTML formatado
+   *  (usado tanto na prévia inline da Etapa 9 quanto na janela de
+   *  impressão/PDF final). O selo no topo muda conforme o status —
+   *  "aprovado" só aparece quando o professor de fato aprovou. */
+  function markdownReportToDocumentHtml(md, s) {
+    // Conversão leve de Markdown -> HTML, suficiente para a estrutura
+    // previsível do relatório (títulos, subtítulos, listas, tabela).
+    // Não é um parser Markdown genérico — não precisa ser, pois o único
+    // documento convertido aqui é o gerado por buildReportMarkdown().
+    const escaped = escapeHtml(md);
+    let body = escaped
+      .replace(/^# (.+)$/gm, "<h1>$1</h1>")
+      .replace(/^## (.+)$/gm, "<h2>$1</h2>")
+      .replace(/^### (.+)$/gm, "<h3>$1</h3>")
+      .replace(/^\d+\. (.+)$/gm, "<li>$1</li>")
+      .replace(/^- (.+)$/gm, "<li>$1</li>")
+      .replace(/\n{2,}/g, "</p><p>")
+      .replace(/\n/g, "<br/>");
+    body = "<p>" + body + "</p>";
+
+    const statusStamps = {
+      rascunho: { text: "Rascunho — ainda não enviado", cls: "stamp-draft" },
+      "aguardando-aprovacao": { text: "Aguardando aprovação do professor", cls: "stamp-pending" },
+      aprovado: {
+        text: `✓ Aprovado pelo professor em ${s.reviewedAt ? new Date(s.reviewedAt).toLocaleString("pt-BR") : "—"}`,
+        cls: "stamp-approved",
+      },
+      "revisao-solicitada": { text: "Revisão solicitada pelo professor", cls: "stamp-revision" },
+    };
+    const stamp = statusStamps[s.submissionStatus] || statusStamps.rascunho;
+
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Relatório de Investigação — ${escapeHtml(s.groupName || "Grupo")}</title>
+<style>
+  @page { size: A4; margin: 22mm 18mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    color: #2f2a22;
+    line-height: 1.55;
+    font-size: 12.5px;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px;
+    background: white;
+  }
+  .doc-header {
+    border-bottom: 3px solid #24413b;
+    padding-bottom: 14px;
+    margin-bottom: 24px;
+  }
+  .doc-header .eyebrow {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #b5652f;
+  }
+  .doc-header h1 { font-size: 20px; margin: 6px 0; color: #24413b; }
+  .approval-stamp {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 10px;
+    border: 1.5px solid #7a8c4f;
+    color: #4c5c2c;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 3px;
+  }
+  .approval-stamp.stamp-pending { border-color: #b5652f; color: #8a4a20; }
+  .approval-stamp.stamp-draft { border-color: #cbbfa4; color: #6b634c; }
+  .approval-stamp.stamp-revision { border-color: #9c4a3c; color: #9c4a3c; }
+  h1 { font-size: 17px; color: #24413b; margin-top: 22px; }
+  h2 { font-size: 14px; color: #24413b; border-bottom: 1px solid #cbbfa4; padding-bottom: 4px; margin-top: 20px; }
+  h3 { font-size: 12.5px; color: #b5652f; margin-top: 14px; margin-bottom: 4px; }
+  li { margin-left: 18px; }
+  p { margin: 6px 0; }
+  .doc-footer {
+    margin-top: 32px;
+    padding-top: 10px;
+    border-top: 1px solid #cbbfa4;
+    font-size: 10px;
+    color: #6b634c;
+    font-family: 'Courier New', monospace;
+  }
+  @media print {
+    body { font-size: 12px; padding: 0; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="doc-header">
+    <span class="eyebrow">Lagamar Investiga · Estudo de Meio · Lagamar Paulista</span>
+    <h1>Relatório de Investigação — ${escapeHtml(s.groupName || "Grupo")}</h1>
+    <span class="approval-stamp ${stamp.cls}">${stamp.text}</span>
+  </div>
+  ${body}
+  <div class="doc-footer">
+    Documento gerado por Lagamar Investiga — Laboratório de Investigação Digital.<br/>
+    As interpretações e hipóteses acima são de autoria do grupo de estudantes.
+  </div>
+</body>
+</html>`;
+  }
+
+  // -----------------------------------------------------------------
+  // Helpers de binding
+  // -----------------------------------------------------------------
+  function bindText(elId, stateKey, customSetter) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.addEventListener("input", (e) => {
+      if (customSetter) customSetter(e.target.value);
+      else state[stateKey] = e.target.value;
+      updateTopbarMeta();
+      saveState(false);
+    });
+  }
+
+  function bindSelect(elId, stateKey, onChange) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.addEventListener("change", (e) => {
+      state[stateKey] = e.target.value;
+      if (onChange) onChange(e.target.value);
+      updateTopbarMeta();
+      saveState(false);
+    });
+  }
+
+  function hydrateForm() {
+    setVal("f-groupName", state.className ? `${state.groupName} (${state.className})` : state.groupName);
+    setVal("f-analysisRound", state.analysisRound);
+    setVal("f-activityNumber", state.activityNumber);
+    setVal("f-activityName", state.activityName);
+    setVal("f-scenario", state.scenario);
+    setVal("f-taskDivision", state.taskDivision);
+    setVal("f-rawData", state.rawData);
+    setVal("f-question1", state.questions[0]);
+    setVal("f-question2", state.questions[1]);
+    setVal("f-question3", state.questions[2]);
+    setVal("f-consultancyNotes", state.consultancyNotes);
+    ["patterns", "observations", "hypothesis", "supportingEvidence", "limitingEvidence", "analyticalLimits", "workBridge", "headline", "newQuestion", "nextStep"].forEach((f) =>
+      setVal("f-" + f, state[f])
+    );
+    hydrateStep2();
+    updateTopbarMeta();
+  }
+
+  function setVal(id, val) {
+    const el = document.getElementById(id);
+    if (el && val !== undefined) el.value = val;
+  }
+
+  function updateTopbarMeta() {
+    document.getElementById("meta-group").textContent = state.groupName || "—";
+    document.getElementById("meta-round").textContent = state.analysisRound || "—";
+    document.getElementById("meta-activity").textContent = state.activityNumber ? `${state.activityNumber} — ${state.activityName}` : "—";
+  }
+
+  // -----------------------------------------------------------------
+  // Navegação global e Caderno de Evidências
+  // -----------------------------------------------------------------
+  function initGlobalControls() {
+    document.getElementById("btn-prev-step").addEventListener("click", () => goToStep(state.currentStep - 1));
+    document.getElementById("btn-next-step").addEventListener("click", () => {
+      if (state.currentStep === TOTAL_STEPS) {
+        if (state.submissionStatus === "rascunho") {
+          toast("Gere o relatório e clique em \"Enviar para aprovação do professor\" para concluir.");
+          document.getElementById("submission-status-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        // Já enviado (aguardando aprovação, aprovado ou revisão solicitada):
+        // "Concluir" encerra a sessão de trabalho e volta para a tela inicial.
+        returnToHome();
+        return;
+      }
+      goToStep(state.currentStep + 1);
+    });
+
+    document.getElementById("btn-save-draft").addEventListener("click", () => {
+      clearTimeout(saveTimer);
+      saveState(true);
+    });
+
+    document.getElementById("btn-open-evidence").addEventListener("click", () => {
+      document.getElementById("evidence-drawer").classList.add("open");
+    });
+    document.getElementById("btn-close-evidence").addEventListener("click", () => {
+      document.getElementById("evidence-drawer").classList.remove("open");
+    });
+
+    // A cada 30s, verifica se o professor aprovou/pediu revisão (útil
+    // quando o aluno deixa a aba aberta esperando resposta).
+    setInterval(async () => {
+      const before = state.submissionStatus;
+      await syncSubmissionStatus();
+      if (state.submissionStatus !== before && state.currentStep === 9) {
+        renderSubmissionPanel();
+        toast("O status do seu relatório foi atualizado pelo professor.");
+      }
+    }, 30000);
+  }
+
+  // -----------------------------------------------------------------
+  // Bootstrap
+  // -----------------------------------------------------------------
+  function renderAll() {
+    renderProgressRail();
+    initStep1();
+    initStep2();
+    initStep3();
+    initStep4();
+    initStep5();
+    initStep6();
+    initStep7();
+    initStep8();
+    initStep9();
+    initFichaImport();
+    hydrateForm();
+    renderEvidenceDrawer();
+    goToStep(state.currentStep || 1);
+  }
+
+  // -----------------------------------------------------------------
+  // Importação de Ficha Técnica em PDF/DOCX (Etapa 1)
+  // -----------------------------------------------------------------
+  function initFichaImport() {
+    const input = document.getElementById("import-ficha-input");
+    const statusEl = document.getElementById("import-ficha-status");
+    if (!input || input.dataset.bound) return; // evita registrar 2x se renderAll rodar de novo
+    input.dataset.bound = "true";
+
+    input.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      statusEl.innerHTML = '<p class="hint">Lendo o arquivo…</p>';
+      try {
+        const result = await window.LagamarImport.importFromFile(file);
+        applyImportedFields(result);
+        renderImportSummary(result);
+      } catch (err) {
+        statusEl.innerHTML = `<div class="warning-box">${escapeHtml(err.message)}</div>`;
+      }
+      input.value = ""; // permite reimportar o mesmo arquivo se necessário
+    });
+  }
+
+  function applyImportedFields(result) {
+    const f = result.fields;
+    // Só sobrescreve campos que o parser encontrou com confiança alta —
+    // nunca apaga o que o grupo já tinha escrito com um valor vazio/incerto.
+    if (result.confidence.analysisRound === "alta" && f.analysisRound) state.analysisRound = f.analysisRound;
+    if (result.confidence.activityNumber === "alta" && f.activityNumber) state.activityNumber = String(f.activityNumber);
+    if (result.confidence.scenario === "alta" && f.scenario) state.scenario = f.scenario;
+    if (result.confidence.taskDivision === "alta" && f.taskDivision) state.taskDivision = f.taskDivision;
+    if (f.materials?.length) state.materials = f.materials;
+    if (f.rawData) state.rawData = f.rawData; // sempre baixa confiança — grupo deve revisar
+    if (result.confidence.question1 === "alta" && f.question1) state.questions[0] = f.question1;
+    if (result.confidence.question2 === "alta" && f.question2) state.questions[1] = f.question2;
+    if (result.confidence.question3 === "alta" && f.question3) state.questions[2] = f.question3;
+    if (result.confidence.consultancyNotes === "alta" && f.consultancyNotes) state.consultancyNotes = f.consultancyNotes;
+    if (result.confidence.patterns === "alta" && f.patterns) state.patterns = f.patterns;
+    if (result.confidence.workBridge === "alta" && f.workBridge) state.workBridge = f.workBridge;
+    if (result.confidence.headline === "alta" && f.headline) state.headline = f.headline;
+    if (result.confidence.newQuestion === "alta" && f.newQuestion) state.newQuestion = f.newQuestion;
+
+    // Atualiza o nome da atividade a partir do número, se aplicável
+    if (state.activityNumber) {
+      const found = D.FIELD_ACTIVITIES.find((a) => String(a.number) === String(state.activityNumber));
+      if (found) state.activityName = found.name;
+    }
+
+    hydrateForm();
+    saveState(false);
+  }
+
+  function renderImportSummary(result) {
+    const statusEl = document.getElementById("import-ficha-status");
+    const total = Object.keys(result.confidence).length;
+    const foundHigh = Object.values(result.confidence).filter((c) => c === "alta").length;
+
+    let html = `<div class="warning-box" style="border-left-color:var(--junco); background:rgba(122,140,79,0.1); color:#3f4c26;">
+      Importado de <strong>${escapeHtml(result.sourceFileName)}</strong>: ${foundHigh} de ${total} campos preenchidos automaticamente.
+      Revise tudo com o grupo antes de continuar — campos não encontrados foram deixados em branco.
+    </div>`;
+
+    if (result.notFoundFields.length > 0) {
+      html += `<p class="provenance-note">Campos que precisam de revisão manual: ${result.notFoundFields.join(", ")}</p>`;
+    }
+    statusEl.innerHTML = html;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    initHero();
+    initGlobalControls();
+  });
+})();
+
+
+</script>
 </body>
 </html>
