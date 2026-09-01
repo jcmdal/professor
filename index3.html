@@ -1867,15 +1867,10 @@ window.LagamarAPI.locationPhotos = {
       .eq("panel", panel)
       .order("location_key");
     if (error) throw error;
-    // Registros sem storage_path (foto ainda não enviada, ex: "Pesca em
-    // Iguape") são excluídos aqui — a galeria mostra o placeholder normal
-    // de "local sem foto" em vez de tentar montar uma URL vazia/quebrada.
-    return data
-      .filter((row) => row.storage_path && row.storage_path.trim())
-      .map((row) => ({
-        ...row,
-        publicUrl: window.sb.storage.from(PHOTOS_BUCKET).getPublicUrl(row.storage_path).data.publicUrl,
-      }));
+    return data.map((row) => ({
+      ...row,
+      publicUrl: window.sb.storage.from(PHOTOS_BUCKET).getPublicUrl(row.storage_path).data.publicUrl,
+    }));
   },
 
   /** Busca a(s) foto(s) de um local específico dentro de um painel. */
