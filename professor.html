@@ -1190,6 +1190,9 @@ table.teacher-table .headline-cell { font-style: italic; color: #4a4436; max-wid
       🗂️ Fila de aprovação
       <span class="count-pill zero" id="nav-pending-count">0</span>
     </button>
+    <button class="teacher-nav-item" data-view="approved" type="button">
+      ✓ Aprovados
+    </button>
     <button class="teacher-nav-item" data-view="compare" type="button">
       🔍 Comparar grupos
     </button>
@@ -1241,6 +1244,19 @@ table.teacher-table .headline-cell { font-style: italic; color: #4a4436; max-wid
       </div>
       <div id="approvals-content">
         <div class="loading-state">Carregando fila…</div>
+      </div>
+    </section>
+
+    <!-- APROVADOS (com opção de cancelar aprovação) -->
+    <section id="view-approved" class="teacher-view" style="display:none;">
+      <div class="teacher-header">
+        <div>
+          <h1>Aprovados</h1>
+          <p>Relatórios já aprovados. Se perceber que algum precisa de correção, cancele a aprovação — o grupo verá o pedido de ajuste e poderá reenviar, sem perder o PDF da versão já aprovada.</p>
+        </div>
+      </div>
+      <div id="approved-content">
+        <div class="loading-state">Carregando aprovados…</div>
       </div>
     </section>
 
@@ -2027,6 +2043,31 @@ window.LagamarAPI.submissions = {
     return data;
   },
 
+  /** Lista as submissões já aprovadas E cuja investigação ainda está
+   *  com status "aprovado" no momento (para o professor poder cancelar
+   *  uma aprovação e pedir correção). Filtramos pelos dois lados porque
+   *  a linha de submissão em si permanece marcada como "aprovado" para
+   *  sempre — é o registro histórico que sustenta o PDF do aluno mesmo
+   *  após um cancelamento — mas depois de cancelada a investigação já
+   *  não deve mais aparecer aqui como "aguardando decisão". */
+  async listApproved() {
+    const { data, error } = await window.sb
+      .from("submissions")
+      .select(`
+        *,
+        investigations!inner(
+          id, analysis_round, activity_number, activity_name, headline,
+          submission_status,
+          group_id, groups(id, group_number, display_name, class_id, classes(name, short_code))
+        )
+      `)
+      .eq("status", "aprovado")
+      .eq("investigations.submission_status", "aprovado")
+      .order("reviewed_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
   /** Lista TODAS as submissões (histórico completo, qualquer status). */
   async listAll() {
     const { data, error } = await window.sb
@@ -2075,6 +2116,43 @@ window.LagamarAPI.submissions = {
       teacher_feedback: feedback,
       reviewed_at: now,
     });
+  },
+
+  /** Professor cancela uma aprovação já dada, pedindo correção. Ao
+   *  contrário de requestRevision (que atua sobre um envio ainda
+   *  pendente), aqui a submissão JÁ estava com status "aprovado" — por
+   *  isso não sobrescrevemos essa linha (ela fica como registro
+   *  histórico de que essa versão foi aprovada, com seu conteúdo
+   *  original preservado). Só o status CORRENTE da investigação muda
+   *  para "revisao-solicitada", pedindo que o grupo corrija e reenvie.
+   *  Isso permite que o PDF final continue sendo gerado a partir dessa
+   *  submissão aprovada, mesmo com a investigação agora em revisão. */
+  async cancelApproval(investigationId, feedback) {
+    const now = new Date().toISOString();
+
+    return window.LagamarAPI.investigations.update(investigationId, {
+      submission_status: "revisao-solicitada",
+      teacher_feedback: feedback,
+      reviewed_at: now,
+    });
+  },
+
+  /** Busca a submissão mais recente com status "aprovado" para uma
+   *  investigação — usada para: (1) saber se em algum momento essa
+   *  investigação já foi aprovada (mesmo que o status atual seja outro,
+   *  por ter sido cancelado depois), e (2) gerar o PDF a partir do
+   *  CONTEÚDO que foi de fato aprovado, não da edição em andamento. */
+  async getLatestApproved(investigationId) {
+    const { data, error } = await window.sb
+      .from("submissions")
+      .select("*")
+      .eq("investigation_id", investigationId)
+      .eq("status", "aprovado")
+      .order("reviewed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
   },
 };
 
@@ -2171,6 +2249,7 @@ window.LagamarAPI.submissions = {
 
         if (btn.dataset.view === "overview") loadOverview();
         if (btn.dataset.view === "approvals") loadApprovals();
+        if (btn.dataset.view === "approved") loadApproved();
         if (btn.dataset.view === "compare") loadCompareFilters();
       });
     });
@@ -2372,6 +2451,86 @@ window.LagamarAPI.submissions = {
           loadApprovals();
         } catch (err) {
           toast("Erro ao solicitar revisão: " + err.message);
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  // -----------------------------------------------------------------
+  // APROVADOS (com opção de cancelar aprovação para correção)
+  // -----------------------------------------------------------------
+  async function loadApproved() {
+    const el = document.getElementById("approved-content");
+    el.innerHTML = '<div class="loading-state">Carregando aprovados…</div>';
+
+    try {
+      const approved = await window.LagamarAPI.submissions.listApproved();
+      renderApprovedList(approved);
+    } catch (err) {
+      el.innerHTML = `<div class="teacher-empty">Não foi possível carregar os aprovados: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  function renderApprovedList(approved) {
+    const el = document.getElementById("approved-content");
+    if (approved.length === 0) {
+      el.innerHTML = '<div class="teacher-empty"><span class="emoji">🗂️</span>Nenhum relatório aprovado ainda.</div>';
+      return;
+    }
+
+    el.innerHTML = approved
+      .map((sub) => {
+        const inv = sub.investigations;
+        const group = inv?.groups;
+        const className = group?.classes?.short_code || "—";
+        const roundLabel = D?.ANALYSIS_ROUNDS?.[inv?.analysis_round]?.label || (inv?.analysis_round ? "Rodada " + inv.analysis_round : "");
+        return `<div class="card" data-submission-card="${sub.id}">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+            <div>
+              <h3 style="margin-bottom:2px;">${escapeHtml(group?.display_name || "Grupo?")} <span style="font-family:var(--font-mono); font-size:11px; color:#8a8064;">${escapeHtml(className)}</span></h3>
+              <p class="card-sub" style="margin:0;">${inv?.activity_number ? "Atividade " + inv.activity_number + " — " + escapeHtml(inv.activity_name || "") : "Atividade não informada"}${roundLabel ? " · " + roundLabel : ""}</p>
+            </div>
+            <span class="provenance-note">Aprovado em ${fmtDate(sub.reviewed_at)}</span>
+          </div>
+          <p style="font-style:italic; margin:12px 0 4px;">"${escapeHtml(inv?.headline || "sem manchete registrada")}"</p>
+          <details style="margin:10px 0;">
+            <summary style="cursor:pointer; font-size:0.85rem; font-weight:600; color:var(--agua-salobra-forte);">Ver relatório completo</summary>
+            <div class="report-preview" style="margin-top:8px; max-height:280px;">${escapeHtml(sub.report_markdown)}</div>
+          </details>
+          <div class="field">
+            <label style="font-size:0.8rem;" for="cancel-fb-${inv?.id}">Motivo da correção (o grupo vai ver este comentário)</label>
+            <textarea id="cancel-fb-${inv?.id}" placeholder="Ex.: A hipótese ficou ótima, mas faltou detalhar a evidência contrária antes de confirmar a aprovação." style="min-height:56px;"></textarea>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="row-action-btn row-action-danger" data-cancel-approval="${inv?.id}" data-group-name="${escapeHtml(group?.display_name || "Grupo?")}" type="button">↺ Cancelar aprovação e pedir correção</button>
+          </div>
+        </div>`;
+      })
+      .join("");
+
+    el.querySelectorAll("[data-cancel-approval]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const invId = btn.dataset.cancelApproval;
+        const feedbackEl = document.getElementById("cancel-fb-" + invId);
+        const feedback = feedbackEl.value.trim();
+        if (!feedback) {
+          toast("Escreva o motivo da correção — o grupo vai ver esse comentário.");
+          feedbackEl.focus();
+          return;
+        }
+        const confirmed = window.confirm(
+          `Cancelar a aprovação do "${btn.dataset.groupName}" e pedir correção? O grupo continuará com acesso ao PDF da versão já aprovada até reenviar uma nova.`
+        );
+        if (!confirmed) return;
+
+        btn.disabled = true;
+        try {
+          await window.LagamarAPI.submissions.cancelApproval(invId, feedback);
+          toast(`Aprovação do ${btn.dataset.groupName} cancelada. O grupo verá o pedido de correção.`);
+          loadApproved();
+        } catch (err) {
+          toast("Não foi possível cancelar agora: " + err.message);
           btn.disabled = false;
         }
       });
