@@ -563,7 +563,6 @@ table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-tr
   border: 1px solid var(--linha); border-radius: var(--radius);
   padding: 16px; margin-bottom: 14px; background: white;
 }
-.approval-item .report-preview { font-size: 0.72rem; }
 
 #btn-export-pdf:disabled, #btn-submit-approval:disabled {
   opacity: 0.5; cursor: not-allowed;
@@ -586,17 +585,49 @@ table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-tr
 }
 .step-nav .save-indicator {
   font-family: var(--font-mono); font-size: 11px; color: #8a8064;
+  max-width: 60ch;
+}
+.step-nav .save-indicator.save-error {
+  color: var(--alerta); font-weight: 600;
+}
+
+.backup-recovery-banner {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--ferrugem); color: white;
+  padding: 12px 20px; display: flex; align-items: center; gap: 16px;
+  flex-wrap: wrap; font-size: 0.85rem;
+}
+.backup-recovery-actions { display: flex; gap: 8px; margin-left: auto; }
+.backup-recovery-banner .btn-secondary {
+  background: white; color: var(--ferrugem); border: none;
+}
+.backup-recovery-banner .icon-btn {
+  background: transparent; border: 1px solid rgba(255,255,255,0.5); color: white;
 }
 
 /* Relatório final */
 .report-preview {
-  background: white; border: 1px solid var(--linha); border-radius: var(--radius);
-  padding: 26px; font-family: var(--font-mono); font-size: 0.82rem; white-space: pre-wrap;
-  max-height: 480px; overflow-y: auto; line-height: 1.6;
+  background: var(--areia); border: 1px solid var(--linha); border-radius: var(--radius);
+  padding: 10px;
+}
+.report-preview iframe { display: block; }
+.approval-item .report-preview {
+  background: white; padding: 12px; font-family: var(--font-mono);
+  font-size: 0.72rem; white-space: pre-wrap; max-height: 260px; overflow-y: auto;
 }
 
 .completeness-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
-.completeness-list li { display: flex; align-items: center; gap: 8px; font-size: 0.87rem; }
+.completeness-list li { display: flex; align-items: center; gap: 8px; font-size: 0.87rem; padding: 4px 6px; border-radius: 4px; }
+.completeness-list li[data-goto-field] { transition: background 0.12s ease; }
+.completeness-list li[data-goto-field]:hover,
+.completeness-list li[data-goto-field]:focus-visible {
+  background: rgba(181,101,47,0.08);
+  outline: none;
+}
+.completeness-goto-hint {
+  margin-left: auto; font-family: var(--font-mono); font-size: 10.5px;
+  color: var(--ferrugem); white-space: nowrap;
+}
 .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .dot.ok { background: var(--junco); }
 .dot.pending { background: var(--linha); }
@@ -630,6 +661,188 @@ table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-tr
 .skip-link:focus { left: 10px; top: 10px; }
 
 ::selection { background: rgba(181,101,47,0.25); }
+
+/* =========================================================================
+   SELEÇÃO DE ACESSO (v2) — escolher turma e depois grupo, sem digitar nome
+   ========================================================================= */
+.access-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin: 28px 0;
+  max-width: 640px;
+}
+
+.access-card {
+  background: var(--areia-clara);
+  border: 1.5px solid var(--linha);
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.access-card:hover { border-color: var(--agua-salobra); transform: translateY(-2px); }
+.access-card:focus-visible { outline: 3px solid var(--ferrugem); outline-offset: 2px; }
+
+.access-card .access-card-icon {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  display: block;
+}
+.access-card .access-card-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--agua-salobra-forte);
+}
+.access-card .access-card-sub {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: #8a8064;
+  margin-top: 4px;
+}
+
+.access-card.class-card {
+  border-color: var(--agua-salobra-forte);
+  background: var(--agua-salobra-forte);
+}
+.access-card.class-card .access-card-title { color: white; }
+.access-card.class-card .access-card-sub { color: rgba(237,228,211,0.7); }
+.access-card.class-card:hover { background: var(--agua-salobra); }
+
+.access-breadcrumb {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: #8a8064;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.access-breadcrumb button {
+  background: none; border: none; color: var(--ferrugem);
+  font-family: inherit; font-size: inherit; cursor: pointer;
+  text-decoration: underline;
+}
+
+.access-loading, .access-error {
+  padding: 24px; text-align: center; color: #8a8064; font-size: 0.9rem;
+  max-width: 500px;
+}
+.access-error { color: var(--alerta); }
+
+.current-group-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(122,140,79,0.14); color: #3f4c26;
+  padding: 8px 14px; border-radius: 20px;
+  font-size: 0.85rem; font-weight: 600;
+  margin-bottom: 20px;
+}
+.current-group-badge button {
+  background: none; border: none; color: #6b634c;
+  text-decoration: underline; cursor: pointer; font-size: 0.8rem;
+  margin-left: 6px;
+}
+
+/* =========================================================================
+   GALERIA DE FOTOS E LIGHTBOX — imersão visual dos locais reais
+   ========================================================================= */
+.photo-strip {
+  display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px;
+  margin: 12px 0;
+}
+.photo-thumb {
+  flex: 0 0 auto; width: 140px; border: 1.5px solid var(--linha);
+  border-radius: var(--radius); overflow: hidden; background: white;
+  cursor: pointer; padding: 0; text-align: left;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.photo-thumb:hover { border-color: var(--ferrugem); transform: translateY(-2px); }
+.photo-thumb img {
+  width: 140px; height: 96px; object-fit: cover; display: block;
+  background: var(--areia);
+}
+.photo-thumb .photo-caption {
+  display: block; font-size: 10.5px; color: #6b634c; padding: 6px 8px;
+  font-family: var(--font-mono); line-height: 1.3;
+}
+.photo-thumb.photo-broken { cursor: default; opacity: 0.5; }
+.photo-thumb.photo-broken img { display: none; }
+.photo-thumb.photo-broken::after {
+  content: "Foto indisponível"; display: block; width: 140px; height: 96px;
+  background: var(--areia); color: #8a8064; font-size: 10px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+}
+
+.photo-placeholder {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 28px 16px; margin: 12px 0;
+  border: 1.5px dashed var(--linha); border-radius: var(--radius);
+  background: rgba(203,191,164,0.15); color: #8a8064; text-align: center;
+}
+.photo-placeholder-icon { font-size: 1.6rem; }
+.photo-placeholder-text { font-size: 0.82rem; max-width: 32ch; }
+
+.photo-lightbox {
+  position: fixed; inset: 0; background: rgba(24,20,14,0.92);
+  display: none; align-items: center; justify-content: center;
+  z-index: 200; padding: 40px;
+}
+.photo-lightbox.open { display: flex; }
+.photo-lightbox .lightbox-image {
+  max-width: min(88vw, 900px); max-height: 78vh; object-fit: contain;
+  border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.photo-lightbox .lightbox-caption {
+  position: absolute; bottom: 28px; left: 0; right: 0; text-align: center;
+  color: var(--areia-clara); font-family: var(--font-mono); font-size: 0.85rem;
+}
+.photo-lightbox .lightbox-close {
+  position: absolute; top: 20px; right: 24px; background: none; border: none;
+  color: white; font-size: 1.4rem; cursor: pointer; line-height: 1;
+  width: 40px; height: 40px; border-radius: 50%;
+}
+.photo-lightbox .lightbox-close:hover { background: rgba(255,255,255,0.12); }
+.photo-lightbox .lightbox-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.1); border: none; color: white;
+  font-size: 2rem; width: 52px; height: 52px; border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.photo-lightbox .lightbox-nav:hover { background: rgba(255,255,255,0.22); }
+.photo-lightbox .lightbox-prev { left: 16px; }
+.photo-lightbox .lightbox-next { right: 16px; }
+@media (max-width: 640px) {
+  .photo-lightbox { padding: 16px; }
+  .photo-lightbox .lightbox-nav { width: 42px; height: 42px; font-size: 1.5rem; }
+}
+
+/* =========================================================================
+   GRÁFICO DA AULA DE MATEMÁTICA — Etapa 4
+   ========================================================================= */
+.math-chart-mode-toggle {
+  display: inline-flex; border: 1px solid var(--linha); border-radius: var(--radius);
+  overflow: hidden; margin-bottom: 16px;
+}
+.mode-toggle-btn {
+  border: none; background: var(--areia-clara); padding: 8px 16px;
+  font-size: 0.85rem; font-weight: 600; color: #6b634c; cursor: pointer;
+}
+.mode-toggle-btn.active { background: var(--agua-salobra-forte); color: white; }
+
+.math-chart-image-wrap { margin: 10px 0; }
+.math-chart-image-wrap img {
+  max-width: 100%; max-height: 420px; border-radius: var(--radius);
+  border: 1px solid var(--linha); display: block;
+}
+.math-chart-image-wrap.photo-broken img { display: none; }
+.math-chart-image-wrap.photo-broken::after {
+  content: "Não foi possível carregar a imagem."; display: block;
+  padding: 20px; text-align: center; color: var(--alerta);
+  border: 1.5px dashed var(--linha); border-radius: var(--radius);
+}
+
 
 </style>
 <style>
@@ -847,6 +1060,8 @@ table.teacher-table .headline-cell { font-style: italic; color: #4a4436; max-wid
 .row-action-btn:hover { background: rgba(61,90,82,0.06); }
 .row-action-btn.primary { background: var(--agua-salobra-forte); color: white; border-color: var(--agua-salobra-forte); }
 .row-action-btn.primary:hover { background: var(--agua-salobra); }
+.row-action-btn.row-action-danger { color: var(--alerta); border-color: var(--alerta); }
+.row-action-btn.row-action-danger:hover { background: rgba(156,74,60,0.08); }
 
 /* --- Empty state --- */
 .teacher-empty {
@@ -1467,11 +1682,13 @@ if (window.supabase && typeof window.supabase.createClient === "function") {
 window.LagamarAPI = window.LagamarAPI || {};
 
 window.LagamarAPI.classesGroups = {
-  /** Lista todas as turmas cadastradas. */
+  /** Lista as turmas cadastradas, exceto a turma DEV (acesso de testes
+   *  do professor, isolada da lista normal de turmas dos alunos). */
   async listClasses() {
     const { data, error } = await window.sb
       .from("classes")
       .select("id, name, short_code")
+      .neq("short_code", "DEV")
       .order("short_code");
     if (error) throw error;
     return data;
@@ -1606,6 +1823,16 @@ window.LagamarAPI.investigations = {
       .order("updated_at", { ascending: false });
     if (error) throw error;
     return data;
+  },
+
+  /** Remove PERMANENTEMENTE uma investigação e tudo relacionado a ela
+   *  (dados, tabela, evidências, submissões, gráfico) — o banco já tem
+   *  "on delete cascade" nessas tabelas, então apagar a investigação
+   *  limpa tudo de uma vez. Ação usada apenas no modo professor, sem
+   *  possibilidade de desfazer. */
+  async remove(investigationId) {
+    const { error } = await window.sb.from("investigations").delete().eq("id", investigationId);
+    if (error) throw error;
   },
 };
 
@@ -2006,7 +2233,10 @@ window.LagamarAPI.submissions = {
           <td class="headline-cell">${inv.headline ? '"' + escapeHtml(inv.headline) + '"' : '<span style="color:#b5aa8c;">sem manchete</span>'}</td>
           <td><span class="submission-badge ${SUBMISSION_STATUS_CLASS[status]}">${SUBMISSION_STATUS_LABELS[status]}</span></td>
           <td>${fmtDate(inv.updated_at)}</td>
-          <td><button class="row-action-btn" data-view-report="${inv.id}">Ver</button></td>
+          <td style="display:flex; gap:6px;">
+            <button class="row-action-btn" data-view-report="${inv.id}">Ver</button>
+            <button class="row-action-btn row-action-danger" data-remove-report="${inv.id}" data-group-name="${escapeHtml(group?.display_name || "Grupo?")}">Remover</button>
+          </td>
         </tr>`;
       })
       .join("");
@@ -2014,6 +2244,33 @@ window.LagamarAPI.submissions = {
     tbody.querySelectorAll("[data-view-report]").forEach((btn) => {
       btn.addEventListener("click", () => openReportModal(all.find((i) => i.id === btn.dataset.viewReport)));
     });
+    tbody.querySelectorAll("[data-remove-report]").forEach((btn) => {
+      btn.addEventListener("click", () => confirmAndRemoveInvestigation(btn.dataset.removeReport, btn.dataset.groupName, loadOverview));
+    });
+  }
+
+  /** Remoção permanente de uma investigação (e tudo relacionado: dados,
+   *  tabela, evidências, submissões, gráfico) — exige digitar "remover"
+   *  para confirmar, já que não há como desfazer. */
+  function confirmAndRemoveInvestigation(investigationId, groupName, onDone) {
+    const confirmation = window.prompt(
+      `Isso vai apagar PERMANENTEMENTE a investigação do "${groupName}" — todos os dados preenchidos, evidências, tabela e o relatório enviado, se houver. Essa ação não pode ser desfeita.\n\nPara confirmar, digite: remover`
+    );
+    if (confirmation === null) return; // cancelou
+    if (confirmation.trim().toLowerCase() !== "remover") {
+      toast('Remoção cancelada — o texto digitado não foi exatamente "remover".');
+      return;
+    }
+    window.LagamarAPI.investigations
+      .remove(investigationId)
+      .then(() => {
+        toast(`Investigação do ${groupName} removida.`);
+        if (onDone) onDone();
+      })
+      .catch((e) => {
+        toast("Não foi possível remover agora. Verifique a internet e tente novamente.");
+        console.error(e);
+      });
   }
 
   function updatePendingCountBadge(all) {
@@ -2074,10 +2331,15 @@ window.LagamarAPI.submissions = {
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn-primary" data-approve="${sub.id}" data-inv="${inv?.id}" type="button">✓ Aprovar</button>
             <button class="btn-secondary" data-revise="${sub.id}" data-inv="${inv?.id}" type="button">Solicitar revisão</button>
+            <button class="row-action-btn row-action-danger" data-remove-report="${inv?.id}" data-group-name="${escapeHtml(group?.display_name || "Grupo?")}" type="button" style="margin-left:auto;">Remover</button>
           </div>
         </div>`;
       })
       .join("");
+
+    el.querySelectorAll("[data-remove-report]").forEach((btn) => {
+      btn.addEventListener("click", () => confirmAndRemoveInvestigation(btn.dataset.removeReport, btn.dataset.groupName, loadApprovals));
+    });
 
     el.querySelectorAll("[data-approve]").forEach((btn) => {
       btn.addEventListener("click", async () => {

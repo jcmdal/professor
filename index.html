@@ -585,6 +585,24 @@ table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-tr
 }
 .step-nav .save-indicator {
   font-family: var(--font-mono); font-size: 11px; color: #8a8064;
+  max-width: 60ch;
+}
+.step-nav .save-indicator.save-error {
+  color: var(--alerta); font-weight: 600;
+}
+
+.backup-recovery-banner {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--ferrugem); color: white;
+  padding: 12px 20px; display: flex; align-items: center; gap: 16px;
+  flex-wrap: wrap; font-size: 0.85rem;
+}
+.backup-recovery-actions { display: flex; gap: 8px; margin-left: auto; }
+.backup-recovery-banner .btn-secondary {
+  background: white; color: var(--ferrugem); border: none;
+}
+.backup-recovery-banner .icon-btn {
+  background: transparent; border: 1px solid rgba(255,255,255,0.5); color: white;
 }
 
 /* Relatório final */
@@ -800,6 +818,32 @@ table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-tr
   .photo-lightbox .lightbox-nav { width: 42px; height: 42px; font-size: 1.5rem; }
 }
 
+/* =========================================================================
+   GRÁFICO DA AULA DE MATEMÁTICA — Etapa 4
+   ========================================================================= */
+.math-chart-mode-toggle {
+  display: inline-flex; border: 1px solid var(--linha); border-radius: var(--radius);
+  overflow: hidden; margin-bottom: 16px;
+}
+.mode-toggle-btn {
+  border: none; background: var(--areia-clara); padding: 8px 16px;
+  font-size: 0.85rem; font-weight: 600; color: #6b634c; cursor: pointer;
+}
+.mode-toggle-btn.active { background: var(--agua-salobra-forte); color: white; }
+
+.math-chart-image-wrap { margin: 10px 0; }
+.math-chart-image-wrap img {
+  max-width: 100%; max-height: 420px; border-radius: var(--radius);
+  border: 1px solid var(--linha); display: block;
+}
+.math-chart-image-wrap.photo-broken img { display: none; }
+.math-chart-image-wrap.photo-broken::after {
+  content: "Não foi possível carregar a imagem."; display: block;
+  padding: 20px; text-align: center; color: var(--alerta);
+  border: 1.5px dashed var(--linha); border-radius: var(--radius);
+}
+
+
 </style>
 </head>
 <body>
@@ -844,12 +888,14 @@ table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-tr
       </div>
       <div class="hero-actions">
         <button class="btn-primary" id="btn-resume-start">Continuar investigação →</button>
-        <button class="btn-secondary" id="btn-teacher-mode">Modo professor</button>
+        <button class="btn-secondary" id="btn-teacher-mode-resume">Modo professor</button>
+        <button class="btn-secondary" id="btn-dev-mode-resume">Dev</button>
       </div>
     </div>
 
     <div class="hero-actions" id="access-step-class-actions">
-      <button class="btn-secondary" id="btn-teacher-mode">Modo professor</button>
+      <button class="btn-secondary" id="btn-teacher-mode-class">Modo professor</button>
+      <button class="btn-secondary" id="btn-dev-mode-class">Dev</button>
     </div>
 
     <div class="hero-footnote">
@@ -872,6 +918,7 @@ table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-tr
     <div class="topbar-actions">
       <button class="icon-btn" id="btn-open-evidence" type="button">📒 Evidências (<span id="evidence-count">0</span>)</button>
       <button class="icon-btn" id="btn-save-draft" type="button">💾 Salvar rascunho</button>
+      <button class="icon-btn" id="btn-topbar-draft-pdf" type="button">📄 Baixar progresso em PDF</button>
     </div>
   </header>
 
@@ -996,6 +1043,16 @@ table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-tr
         <button class="panel-tab" data-panel="trabalho" type="button">4 · Mundo do Trabalho</button>
       </div>
       <div id="panel-content"></div>
+
+      <div class="card" id="math-chart-card">
+        <h3>📊 Gráfico da aula de Matemática</h3>
+        <p class="card-sub">Espaço do grupo para o gráfico construído nas aulas de Matemática a partir dos dados coletados em campo. Vocês podem inserir os números aqui (a ferramenta desenha o gráfico) ou enviar uma imagem do gráfico já pronto.</p>
+        <div class="math-chart-mode-toggle" role="group" aria-label="Modo do gráfico">
+          <button class="mode-toggle-btn active" data-chart-mode="dados" type="button">Inserir dados</button>
+          <button class="mode-toggle-btn" data-chart-mode="imagem" type="button">Enviar imagem pronta</button>
+        </div>
+        <div id="math-chart-content"></div>
+      </div>
     </section>
 
     <!-- ETAPA 5: Balcão dos especialistas -->
@@ -1107,6 +1164,7 @@ table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-tr
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
           <button class="btn-primary" id="btn-submit-approval" type="button">Enviar para aprovação do professor</button>
           <button class="btn-secondary" id="btn-export-pdf" type="button" disabled title="Disponível somente após a aprovação do professor">Baixar PDF final</button>
+          <button class="btn-secondary" id="btn-export-draft-pdf" type="button">Baixar progresso em PDF (a qualquer momento)</button>
         </div>
       </div>
       <div class="card">
@@ -1575,11 +1633,13 @@ window.LagamarSession = (function () {
 window.LagamarAPI = window.LagamarAPI || {};
 
 window.LagamarAPI.classesGroups = {
-  /** Lista todas as turmas cadastradas. */
+  /** Lista as turmas cadastradas, exceto a turma DEV (acesso de testes
+   *  do professor, isolada da lista normal de turmas dos alunos). */
   async listClasses() {
     const { data, error } = await window.sb
       .from("classes")
       .select("id, name, short_code")
+      .neq("short_code", "DEV")
       .order("short_code");
     if (error) throw error;
     return data;
@@ -1714,6 +1774,16 @@ window.LagamarAPI.investigations = {
       .order("updated_at", { ascending: false });
     if (error) throw error;
     return data;
+  },
+
+  /** Remove PERMANENTEMENTE uma investigação e tudo relacionado a ela
+   *  (dados, tabela, evidências, submissões, gráfico) — o banco já tem
+   *  "on delete cascade" nessas tabelas, então apagar a investigação
+   *  limpa tudo de uma vez. Ação usada apenas no modo professor, sem
+   *  possibilidade de desfazer. */
+  async remove(investigationId) {
+    const { error } = await window.sb.from("investigations").delete().eq("id", investigationId);
+    if (error) throw error;
   },
 };
 
@@ -1892,6 +1962,122 @@ window.LagamarAPI.locationPhotos = {
   async listForLocation(panel, locationKey) {
     const all = await this.listForPanel(panel);
     return all.filter((p) => p.location_key === locationKey);
+  },
+};
+
+</script>
+<script>
+/**
+ * api/mathCharts.js
+ * Espaço único de gráfico na Etapa 4, produzido pelos alunos nas aulas
+ * de matemática. Suporta dois modos: inserir dados numéricos (a
+ * aplicação desenha o gráfico) ou subir uma imagem de um gráfico já
+ * pronto (feito em outro lugar — papel, planilha etc.).
+ */
+window.LagamarAPI = window.LagamarAPI || {};
+
+const MATH_CHARTS_BUCKET = "math-charts";
+const MATH_PANEL_KEY = "matematica";
+
+window.LagamarAPI.mathCharts = {
+  /** Busca (ou cria vazio) o registro de gráfico desta investigação. */
+  async getOrCreate(investigationId) {
+    const { data: existing, error: selError } = await window.sb
+      .from("math_charts")
+      .select("*")
+      .eq("investigation_id", investigationId)
+      .maybeSingle();
+    if (selError) throw selError;
+    if (existing) return existing;
+
+    const { data, error } = await window.sb
+      .from("math_charts")
+      .insert({ investigation_id: investigationId, mode: "dados" })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateMode(investigationId, mode) {
+    const { data, error } = await window.sb
+      .from("math_charts")
+      .update({ mode })
+      .eq("investigation_id", investigationId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateMeta(investigationId, patch) {
+    // patch pode conter: title, chart_type, caption
+    const { data, error } = await window.sb
+      .from("math_charts")
+      .update(patch)
+      .eq("investigation_id", investigationId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  /** Envia a imagem do gráfico pronto para o Storage e associa ao registro. */
+  async uploadImage(investigationId, file) {
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${investigationId}/grafico-${Date.now()}.${ext}`;
+    const { error: upErr } = await window.sb.storage.from(MATH_CHARTS_BUCKET).upload(path, file, {
+      upsert: true,
+    });
+    if (upErr) throw upErr;
+
+    const { data, error } = await window.sb
+      .from("math_charts")
+      .update({ mode: "imagem", image_storage_path: path })
+      .eq("investigation_id", investigationId)
+      .select()
+      .single();
+    if (error) throw error;
+
+    return {
+      ...data,
+      imageUrl: window.sb.storage.from(MATH_CHARTS_BUCKET).getPublicUrl(path).data.publicUrl,
+    };
+  },
+
+  getImageUrl(path) {
+    if (!path) return null;
+    return window.sb.storage.from(MATH_CHARTS_BUCKET).getPublicUrl(path).data.publicUrl;
+  },
+
+  /** Lista os pontos de dados numéricos do gráfico (modo "dados"). */
+  async listDataPoints(investigationId) {
+    const all = await window.LagamarAPI.dataPoints.listForInvestigation(investigationId);
+    return all.filter((p) => p.panel === MATH_PANEL_KEY);
+  },
+
+  async addDataPoint(investigationId, label, value, unit) {
+    return window.LagamarAPI.dataPoints.add(investigationId, {
+      data_type: "quantitativo",
+      panel: MATH_PANEL_KEY,
+      location: null,
+      variable_name: label,
+      numeric_value: value,
+      unit: unit || null,
+      provenance: "campo",
+    });
+  },
+
+  async updateDataPoint(id, label, value, unit) {
+    return window.LagamarAPI.dataPoints.update(id, {
+      variable_name: label,
+      numeric_value: value,
+      unit: unit || null,
+    });
+  },
+
+  async removeDataPoint(id) {
+    return window.LagamarAPI.dataPoints.remove(id);
   },
 };
 
@@ -2498,6 +2684,7 @@ window.LagamarImport = (function () {
 
   const D = window.LAGAMAR_DATA;
   const TOTAL_STEPS = 9;
+  const LOCAL_BACKUP_PREFIX = "lagamar-local-backup-";
 
   // -----------------------------------------------------------------
   // Estado (agora espelha uma linha da tabela `investigations` no
@@ -2545,7 +2732,11 @@ window.LagamarImport = (function () {
   let saveTimer = null;
   let hasPendingSave = false; // true entre o momento em que o usuário digita e o save no banco de fato completar
 
-  /** Carrega a investigação ativa do grupo (Supabase) para dentro do `state` local. */
+  /** Carrega a investigação ativa do grupo (Supabase) para dentro do `state` local.
+   *  Retorna { hasNewerLocalBackup } para o chamador decidir se oferece
+   *  recuperação de um backup local mais recente que o banco (ex: o
+   *  último save do aluno falhou por rede e ele fechou a aba antes de
+   *  a conexão voltar). */
   async function loadStateFromSupabase(groupId) {
     const inv = await window.LagamarAPI.investigations.getOrCreateForGroup(groupId);
     const rows = await window.LagamarAPI.tableRows.listForInvestigation(inv.id);
@@ -2587,48 +2778,131 @@ window.LagamarImport = (function () {
       teacherFeedback: inv.teacher_feedback || "",
       reviewedAt: inv.reviewed_at,
     });
-    return state;
+
+    // Um backup local existir significa que a última tentativa de salvar
+    // no banco não chegou a confirmar sucesso (senão teria sido apagado).
+    // Isso é sinal de dado potencialmente mais recente que o que acabamos
+    // de carregar do banco.
+    const backup = getLocalBackup(inv.id);
+    return { hasNewerLocalBackup: !!backup, backup };
   }
 
   /** Salva os campos simples da investigação no Supabase (com debounce). */
+  /** Monta o payload de atualização a partir do state atual — usado tanto
+   *  pelo save com debounce quanto pelo save imediato, para nunca haver
+   *  divergência entre os dois caminhos. */
+  function buildUpdatePayload() {
+    return {
+      analysis_round: state.analysisRound ? Number(state.analysisRound) : null,
+      activity_number: state.activityNumber ? Number(state.activityNumber) : null,
+      activity_name: state.activityName,
+      scenario: state.scenario,
+      task_division: state.taskDivision,
+      materials: state.materials,
+      materials_accessible: state.materialsAccessible,
+      raw_data: state.rawData,
+      questions: state.questions,
+      consultancy_notes: state.consultancyNotes,
+      patterns: state.patterns,
+      observations: state.observations,
+      hypothesis: state.hypothesis,
+      supporting_evidence: state.supportingEvidence,
+      limiting_evidence: state.limitingEvidence,
+      analytical_limits: state.analyticalLimits,
+      work_bridge: state.workBridge,
+      headline: state.headline,
+      new_question: state.newQuestion,
+      next_step: state.nextStep,
+      current_step: state.currentStep,
+    };
+  }
+
+  /** Guarda uma cópia crua do state no localStorage deste navegador —
+   *  rede de segurança que não depende do Supabase. Se o save no banco
+   *  falhar (rede instável, comum em escolas), o dado ainda não se perde
+   *  de vez: fica recuperável neste mesmo navegador. Isso NÃO substitui
+   *  o banco como fonte da verdade — é só uma segunda linha de defesa. */
+  function saveLocalBackup() {
+    if (!state.investigationId) return;
+    try {
+      localStorage.setItem(
+        LOCAL_BACKUP_PREFIX + state.investigationId,
+        JSON.stringify({ savedAt: new Date().toISOString(), state })
+      );
+    } catch (e) {
+      // localStorage cheio ou indisponível — não é crítico, o principal
+      // continua sendo a tentativa de salvar no banco.
+      console.warn("Não foi possível criar backup local:", e);
+    }
+  }
+
+  function clearLocalBackup() {
+    if (!state.investigationId) return;
+    try {
+      localStorage.removeItem(LOCAL_BACKUP_PREFIX + state.investigationId);
+    } catch (e) {
+      /* ignora */
+    }
+  }
+
+  function getLocalBackup(investigationId) {
+    try {
+      const raw = localStorage.getItem(LOCAL_BACKUP_PREFIX + investigationId);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** Tenta salvar no banco com até 2 novas tentativas (3 no total) em
+   *  caso de falha de rede, com pequena espera entre elas. Escolas
+   *  costumam ter Wi-Fi instável — uma falha isolada não deve custar
+   *  o trabalho do aluno. */
+  async function updateWithRetry(payload, attempt = 1) {
+    try {
+      return await window.LagamarAPI.investigations.update(state.investigationId, payload);
+    } catch (e) {
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, 500 * attempt));
+        return updateWithRetry(payload, attempt + 1);
+      }
+      throw e;
+    }
+  }
+
+  function showSaveError() {
+    const el = document.getElementById("save-indicator");
+    if (el) {
+      el.textContent = "⚠ Não foi possível salvar na nuvem. Seu trabalho está protegido neste navegador — não feche a aba até a conexão voltar.";
+      el.classList.add("save-error");
+    }
+    toast("Sem conexão para salvar agora. Seu trabalho ficou guardado neste navegador — não feche a aba.");
+  }
+
+  function clearSaveError() {
+    const el = document.getElementById("save-indicator");
+    if (el) el.classList.remove("save-error");
+  }
+
   function saveState(showToast) {
     const el = document.getElementById("save-indicator");
     if (el) el.textContent = "Salvando…";
     hasPendingSave = true;
+    saveLocalBackup(); // grava o backup local IMEDIATAMENTE, antes mesmo de tentar a rede
 
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async () => {
       if (!state.investigationId) return;
       try {
-        await window.LagamarAPI.investigations.update(state.investigationId, {
-          analysis_round: state.analysisRound ? Number(state.analysisRound) : null,
-          activity_number: state.activityNumber ? Number(state.activityNumber) : null,
-          activity_name: state.activityName,
-          scenario: state.scenario,
-          task_division: state.taskDivision,
-          materials: state.materials,
-          materials_accessible: state.materialsAccessible,
-          raw_data: state.rawData,
-          questions: state.questions,
-          consultancy_notes: state.consultancyNotes,
-          patterns: state.patterns,
-          observations: state.observations,
-          hypothesis: state.hypothesis,
-          supporting_evidence: state.supportingEvidence,
-          limiting_evidence: state.limitingEvidence,
-          analytical_limits: state.analyticalLimits,
-          work_bridge: state.workBridge,
-          headline: state.headline,
-          new_question: state.newQuestion,
-          next_step: state.nextStep,
-          current_step: state.currentStep,
-        });
+        await updateWithRetry(buildUpdatePayload());
         hasPendingSave = false;
+        clearSaveError();
+        clearLocalBackup();
         if (el) el.textContent = "Salvo na nuvem · " + new Date().toLocaleTimeString("pt-BR");
         if (showToast) toast("Rascunho salvo.");
       } catch (e) {
-        if (el) el.textContent = "Não foi possível salvar agora. Verifique a internet.";
         console.error("Erro ao salvar:", e);
+        showSaveError();
       }
     }, 600); // debounce: evita 1 chamada de rede por tecla digitada
   }
@@ -2641,35 +2915,17 @@ window.LagamarImport = (function () {
     clearTimeout(saveTimer);
     if (!state.investigationId) return;
     hasPendingSave = true;
+    saveLocalBackup();
     try {
-      await window.LagamarAPI.investigations.update(state.investigationId, {
-        analysis_round: state.analysisRound ? Number(state.analysisRound) : null,
-        activity_number: state.activityNumber ? Number(state.activityNumber) : null,
-        activity_name: state.activityName,
-        scenario: state.scenario,
-        task_division: state.taskDivision,
-        materials: state.materials,
-        materials_accessible: state.materialsAccessible,
-        raw_data: state.rawData,
-        questions: state.questions,
-        consultancy_notes: state.consultancyNotes,
-        patterns: state.patterns,
-        observations: state.observations,
-        hypothesis: state.hypothesis,
-        supporting_evidence: state.supportingEvidence,
-        limiting_evidence: state.limitingEvidence,
-        analytical_limits: state.analyticalLimits,
-        work_bridge: state.workBridge,
-        headline: state.headline,
-        new_question: state.newQuestion,
-        next_step: state.nextStep,
-        current_step: state.currentStep,
-      });
+      await updateWithRetry(buildUpdatePayload());
       hasPendingSave = false;
+      clearSaveError();
+      clearLocalBackup();
       const el = document.getElementById("save-indicator");
       if (el) el.textContent = "Salvo na nuvem · " + new Date().toLocaleTimeString("pt-BR");
     } catch (e) {
       console.error("Erro ao salvar imediatamente:", e);
+      showSaveError();
     }
   }
 
@@ -2742,16 +2998,50 @@ window.LagamarImport = (function () {
   }
 
   // -----------------------------------------------------------------
-  // Acesso ao modo professor (protegido por senha simples)
+  // Acesso ao modo professor e ao modo dev (protegidos por senha)
+  // -----------------------------------------------------------------
+  const DEV_PASSWORD = "julio@admin";
+  const DEV_GROUP_ACCESS_CODE = "dev-teste";
+
+  function goToTeacherMode() {
+    window.location.href = "professor.html";
+  }
+
+  /** Acesso "dev": pede a senha e, se correta, entra direto no grupo de
+   *  teste isolado (turma DEV) — usado pelo professor para testar a
+   *  ferramenta sem misturar dados com o trabalho real dos alunos. */
+  async function goToDevMode() {
+    const attempt = window.prompt("Digite a senha do acesso dev:");
+    if (attempt === null) return;
+    if (attempt !== DEV_PASSWORD) {
+      toast("Senha incorreta. Acesso dev não liberado.");
+      return;
+    }
+    try {
+      const group = await window.LagamarAPI.classesGroups.getGroupByAccessCode(DEV_GROUP_ACCESS_CODE);
+      if (!group) {
+        toast("Grupo de teste (DEV) não encontrado no banco. Avise o suporte técnico.");
+        return;
+      }
+      window.LagamarSession.setActiveGroupId(group.id);
+      await enterAppForGroup(group.id);
+      toast("Acesso dev: você está no Grupo de Teste, isolado dos dados dos alunos.");
+    } catch (e) {
+      toast("Não foi possível entrar no modo dev. Verifique a internet.");
+      console.error(e);
+    }
+  }
+
   // -----------------------------------------------------------------
   // Tela inicial: seleção de turma → grupo (substitui o antigo hero
   // com "Começar investigação" — agora o acesso é por clique no card
   // do grupo, sem digitar nome).
   // -----------------------------------------------------------------
   function initHero() {
-    document.getElementById("btn-teacher-mode").addEventListener("click", () => {
-      window.location.href = "professor.html";
-    });
+    document.getElementById("btn-teacher-mode-resume").addEventListener("click", goToTeacherMode);
+    document.getElementById("btn-teacher-mode-class").addEventListener("click", goToTeacherMode);
+    document.getElementById("btn-dev-mode-resume").addEventListener("click", goToDevMode);
+    document.getElementById("btn-dev-mode-class").addEventListener("click", goToDevMode);
 
     const resumedGroupId = window.LagamarSession.getActiveGroupId();
     if (resumedGroupId) {
@@ -2852,15 +3142,51 @@ window.LagamarImport = (function () {
     document.getElementById("app-shell").classList.add("active");
     toast("Carregando investigação do grupo…");
     try {
-      await loadStateFromSupabase(groupId);
+      const { hasNewerLocalBackup, backup } = await loadStateFromSupabase(groupId);
       const group = await window.LagamarAPI.classesGroups.getGroupById(groupId);
       state.groupName = group?.display_name || state.groupName;
       state.className = group?.classes?.short_code || state.className;
       renderAll();
+
+      if (hasNewerLocalBackup && backup) {
+        offerLocalBackupRecovery(backup);
+      }
     } catch (e) {
       console.error(e);
       toast("Erro ao carregar a investigação. Recarregue a página.");
     }
+  }
+
+  /** Mostra um aviso não-bloqueante oferecendo restaurar um backup local
+   *  que não chegou a ser confirmado no banco (última sessão pode ter
+   *  caído a internet antes do save terminar). O aluno decide: manter o
+   *  que veio do banco, ou recuperar a versão local mais recente. */
+  function offerLocalBackupRecovery(backup) {
+    const savedAtLabel = backup.savedAt ? new Date(backup.savedAt).toLocaleString("pt-BR") : "momento desconhecido";
+    const banner = document.createElement("div");
+    banner.className = "backup-recovery-banner";
+    banner.innerHTML = `
+      <span>💾 Encontramos uma versão salva neste navegador (${escapeHtml(savedAtLabel)}) que pode não ter chegado a sincronizar com a nuvem — provavelmente por uma queda de internet.</span>
+      <div class="backup-recovery-actions">
+        <button class="btn-secondary" id="btn-restore-backup" type="button">Usar essa versão</button>
+        <button class="icon-btn" id="btn-dismiss-backup" type="button">Manter o que está salvo agora</button>
+      </div>
+    `;
+    document.body.prepend(banner);
+
+    document.getElementById("btn-restore-backup").addEventListener("click", () => {
+      const restoredInvestigationId = state.investigationId; // preserva o id atual, real do banco
+      state = Object.assign(defaultState(), backup.state, { investigationId: restoredInvestigationId });
+      hydrateForm();
+      renderEvidenceDrawer();
+      saveState(true);
+      banner.remove();
+      toast("Versão local restaurada e sincronizada com a nuvem.");
+    });
+    document.getElementById("btn-dismiss-backup").addEventListener("click", () => {
+      clearLocalBackup();
+      banner.remove();
+    });
   }
 
   /** Encerra a sessão de trabalho e volta para a tela inicial. Mantém a
@@ -3077,6 +3403,7 @@ window.LagamarImport = (function () {
       });
     });
     renderPanelContent();
+    initMathChart();
   }
 
   function renderPanelContent() {
@@ -3085,6 +3412,200 @@ window.LagamarImport = (function () {
     if (currentPanel === "hidrodinamica") return (el.innerHTML = "", renderPanelHidrodinamica(el));
     if (currentPanel === "ecossistemas") return (el.innerHTML = "", renderPanelEcossistemas(el));
     if (currentPanel === "trabalho") return (el.innerHTML = "", renderPanelTrabalho(el));
+  }
+
+  // -----------------------------------------------------------------
+  // Gráfico da aula de Matemática (Etapa 4, fora dos 4 painéis)
+  // -----------------------------------------------------------------
+  let mathChartRecord = null; // registro atual de public.math_charts
+  let mathChartDataPoints = []; // pontos numéricos, quando mode === "dados"
+
+  async function initMathChart() {
+    document.querySelectorAll("[data-chart-mode]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const mode = btn.dataset.chartMode;
+        if (mathChartRecord && mathChartRecord.mode === mode) return;
+        document.querySelectorAll("[data-chart-mode]").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        try {
+          mathChartRecord = await window.LagamarAPI.mathCharts.updateMode(state.investigationId, mode);
+          renderMathChartContent();
+        } catch (e) {
+          toast("Não foi possível trocar o modo do gráfico. Verifique a internet.");
+        }
+      });
+    });
+
+    const contentEl = document.getElementById("math-chart-content");
+    contentEl.innerHTML = '<p class="hint">Carregando…</p>';
+    try {
+      mathChartRecord = await window.LagamarAPI.mathCharts.getOrCreate(state.investigationId);
+      mathChartDataPoints = await window.LagamarAPI.mathCharts.listDataPoints(state.investigationId);
+      document.querySelectorAll("[data-chart-mode]").forEach((b) => {
+        b.classList.toggle("active", b.dataset.chartMode === mathChartRecord.mode);
+      });
+      renderMathChartContent();
+    } catch (e) {
+      contentEl.innerHTML = '<p class="data-missing">Não foi possível carregar o gráfico agora. Verifique a internet e tente novamente.</p>';
+      console.error(e);
+    }
+  }
+
+  function renderMathChartContent() {
+    const contentEl = document.getElementById("math-chart-content");
+    if (!mathChartRecord) return;
+
+    if (mathChartRecord.mode === "imagem") {
+      renderMathChartImageMode(contentEl);
+    } else {
+      renderMathChartDataMode(contentEl);
+    }
+  }
+
+  function renderMathChartImageMode(contentEl) {
+    const hasImage = !!mathChartRecord.image_storage_path;
+    const imageUrl = hasImage ? window.LagamarAPI.mathCharts.getImageUrl(mathChartRecord.image_storage_path) : null;
+
+    contentEl.innerHTML = `
+      <div class="field">
+        <label for="math-chart-upload">Enviar imagem do gráfico (foto, print ou arquivo exportado)</label>
+        <input type="file" id="math-chart-upload" accept="image/*" />
+      </div>
+      <div id="math-chart-image-preview">
+        ${hasImage
+          ? `<div class="math-chart-image-wrap"><img src="${escapeHtml(imageUrl)}" alt="Gráfico enviado pelo grupo" onerror="this.closest('.math-chart-image-wrap').classList.add('photo-broken')" /></div>`
+          : '<p class="data-missing">Nenhuma imagem enviada ainda.</p>'}
+      </div>
+      <div class="field">
+        <label for="math-chart-caption">Legenda do gráfico (o que ele mostra?)</label>
+        <input type="text" id="math-chart-caption" value="${escapeHtml(mathChartRecord.caption || "")}" placeholder="Ex.: Comparação de salinidade entre os pontos A e B" />
+      </div>
+    `;
+
+    document.getElementById("math-chart-upload").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const status = document.getElementById("math-chart-image-preview");
+      status.innerHTML = '<p class="hint">Enviando imagem…</p>';
+      try {
+        const updated = await window.LagamarAPI.mathCharts.uploadImage(state.investigationId, file);
+        mathChartRecord = updated;
+        renderMathChartContent();
+        toast("Imagem do gráfico enviada.");
+      } catch (err) {
+        toast("Não foi possível enviar a imagem. Verifique a internet e tente novamente.");
+        renderMathChartContent();
+      }
+      e.target.value = "";
+    });
+
+    let captionTimer = null;
+    document.getElementById("math-chart-caption").addEventListener("input", (e) => {
+      clearTimeout(captionTimer);
+      const val = e.target.value;
+      captionTimer = setTimeout(async () => {
+        try {
+          mathChartRecord = await window.LagamarAPI.mathCharts.updateMeta(state.investigationId, { caption: val });
+        } catch (err) {
+          console.warn("Não foi possível salvar a legenda do gráfico:", err);
+        }
+      }, 600);
+    });
+  }
+
+  function renderMathChartDataMode(contentEl) {
+    let html = `
+      <table class="data-table" style="margin-bottom:12px;">
+        <thead><tr><th>Rótulo</th><th>Valor</th><th>Unidade</th><th></th></tr></thead>
+        <tbody id="math-chart-rows">
+    `;
+    mathChartDataPoints.forEach((p) => {
+      html += `<tr data-point-id="${p.id}">
+        <td><input type="text" class="math-point-label" value="${escapeHtml(p.variable_name || "")}" /></td>
+        <td><input type="number" class="math-point-value" value="${p.numeric_value ?? ""}" step="any" /></td>
+        <td><input type="text" class="math-point-unit" value="${escapeHtml(p.unit || "")}" placeholder="ex: g/L" /></td>
+        <td><button class="icon-btn" data-remove-point="${p.id}" type="button">✕</button></td>
+      </tr>`;
+    });
+    html += `</tbody></table>
+      <button class="btn-secondary" id="btn-add-math-point" type="button">+ Adicionar linha</button>
+      <h4 style="margin-top:18px; font-family:var(--font-display);">Prévia do gráfico</h4>
+      <div class="bar-chart" id="math-chart-preview"></div>
+    `;
+    contentEl.innerHTML = html;
+
+    renderMathChartBars();
+
+    document.getElementById("btn-add-math-point").addEventListener("click", async () => {
+      try {
+        const created = await window.LagamarAPI.mathCharts.addDataPoint(state.investigationId, "", null, "");
+        mathChartDataPoints.push(created);
+        renderMathChartDataMode(contentEl);
+      } catch (e) {
+        toast("Não foi possível adicionar a linha. Verifique a internet.");
+      }
+    });
+
+    contentEl.querySelectorAll("[data-remove-point]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.removePoint;
+        try {
+          await window.LagamarAPI.mathCharts.removeDataPoint(id);
+          mathChartDataPoints = mathChartDataPoints.filter((p) => p.id !== id);
+          renderMathChartDataMode(contentEl);
+        } catch (e) {
+          toast("Não foi possível remover a linha. Verifique a internet.");
+        }
+      });
+    });
+
+    let rowSaveTimer = null;
+    contentEl.querySelectorAll("#math-chart-rows tr").forEach((row) => {
+      const id = row.dataset.pointId;
+      const labelInput = row.querySelector(".math-point-label");
+      const valueInput = row.querySelector(".math-point-value");
+      const unitInput = row.querySelector(".math-point-unit");
+
+      const scheduleSave = () => {
+        clearTimeout(rowSaveTimer);
+        rowSaveTimer = setTimeout(async () => {
+          const point = mathChartDataPoints.find((p) => p.id === id);
+          if (!point) return;
+          point.variable_name = labelInput.value;
+          point.numeric_value = valueInput.value === "" ? null : Number(valueInput.value);
+          point.unit = unitInput.value;
+          try {
+            await window.LagamarAPI.mathCharts.updateDataPoint(id, point.variable_name, point.numeric_value, point.unit);
+            renderMathChartBars();
+          } catch (e) {
+            toast("Não foi possível salvar. Verifique a internet.");
+          }
+        }, 600);
+      };
+
+      [labelInput, valueInput, unitInput].forEach((inp) => inp.addEventListener("input", scheduleSave));
+    });
+  }
+
+  function renderMathChartBars() {
+    const container = document.getElementById("math-chart-preview");
+    if (!container) return;
+    const validPoints = mathChartDataPoints.filter((p) => p.numeric_value !== null && p.numeric_value !== undefined && p.variable_name);
+    if (validPoints.length === 0) {
+      container.innerHTML = '<p class="data-missing">Adicione linhas com rótulo e valor para ver o gráfico aqui.</p>';
+      return;
+    }
+    const max = Math.max(...validPoints.map((p) => Number(p.numeric_value)), 1);
+    container.innerHTML = validPoints
+      .map((p) => {
+        const h = Math.max((Number(p.numeric_value) / max) * 100, 4);
+        return `<div class="bar-col">
+          <span class="bar-value">${p.numeric_value}${p.unit ? " " + escapeHtml(p.unit) : ""}</span>
+          <div class="bar" style="height:${h}%;" role="img" aria-label="${escapeHtml(p.variable_name)}: ${p.numeric_value}"></div>
+          <span class="bar-label">${escapeHtml(p.variable_name)}</span>
+        </div>`;
+      })
+      .join("");
   }
 
   // --- Painel 1 ---
@@ -3637,6 +4158,10 @@ ${state.evidenceLog.map((ev, i) => `${i + 1}. [${ev.panel}] ${ev.reference} — 
       openPdfPrintView();
     });
 
+    document.getElementById("btn-export-draft-pdf").addEventListener("click", () => {
+      openDraftPdfPrintView();
+    });
+
     renderSubmissionPanel();
   }
 
@@ -3709,14 +4234,27 @@ ${state.evidenceLog.map((ev, i) => `${i + 1}. [${ev.panel}] ${ev.reference} — 
   // impressão e acionar window.print() — o usuário escolhe "Salvar
   // como PDF" no diálogo de impressão do navegador. Isso evita
   // dependências externas e funciona em qualquer navegador moderno.
+  /** Exporta o PDF do relatório final (aprovado) — mantém a regra de só
+   *  liberar depois que o professor aprovou. */
   function openPdfPrintView() {
     if (state.submissionStatus !== "aprovado") {
-      toast("O PDF só fica disponível depois que o professor aprovar o relatório.");
+      toast("O PDF do relatório final só fica disponível depois que o professor aprovar. Use \"Baixar progresso em PDF\" para salvar o que já foi preenchido a qualquer momento.");
       return;
     }
     const md = state._lastReport || buildReportMarkdown();
-    const html = markdownReportToDocumentHtml(md, state);
+    printDocumentAsPdf(markdownReportToDocumentHtml(md, state));
+  }
 
+  /** Exporta em PDF o progresso ATUAL do preenchimento, disponível a
+   *  qualquer momento (rascunho, aguardando aprovação, aprovado ou em
+   *  revisão) — pedido explícito para os alunos nunca ficarem sem uma
+   *  cópia do que já escreveram, independente do status de aprovação. */
+  function openDraftPdfPrintView() {
+    const md = buildReportMarkdown(); // sempre monta com o estado mais atual, mesmo sem ter clicado em "Gerar Relatório"
+    printDocumentAsPdf(markdownReportToDocumentHtml(md, state));
+  }
+
+  function printDocumentAsPdf(html) {
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       toast("O navegador bloqueou a janela de impressão. Permita pop-ups para este site e tente novamente.");
@@ -3891,7 +4429,7 @@ ${state.evidenceLog.map((ev, i) => `${i + 1}. [${ev.panel}] ${ev.reference} — 
 
   function setVal(id, val) {
     const el = document.getElementById(id);
-    if (el && val !== undefined) el.value = val;
+    if (el && val !== undefined && val !== null) el.value = val;
   }
 
   function updateTopbarMeta() {
@@ -3923,6 +4461,10 @@ ${state.evidenceLog.map((ev, i) => `${i + 1}. [${ev.panel}] ${ev.reference} — 
     document.getElementById("btn-save-draft").addEventListener("click", () => {
       clearTimeout(saveTimer);
       saveState(true);
+    });
+
+    document.getElementById("btn-topbar-draft-pdf").addEventListener("click", () => {
+      openDraftPdfPrintView();
     });
 
     document.getElementById("btn-open-evidence").addEventListener("click", () => {
