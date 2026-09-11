@@ -2202,6 +2202,141 @@ window.LagamarAPI.submissions = {
     return new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
   }
 
+  /** Converte o relatório em Markdown para um documento HTML formatado —
+   *  mesma lógica usada na tela do aluno, para o professor ver o
+   *  relatório como um documento de verdade, não como texto bruto com
+   *  "##", "-", "|---|" aparecendo literalmente. */
+  function markdownReportToDocumentHtml(md, groupName, stampText, stampCls) {
+    const escaped = escapeHtml(md);
+    let body = escaped
+      .replace(/^# (.+)$/gm, "<h1>$1</h1>")
+      .replace(/^## (.+)$/gm, "<h2>$1</h2>")
+      .replace(/^### (.+)$/gm, "<h3>$1</h3>")
+      .replace(/^\d+\. (.+)$/gm, "<li>$1</li>")
+      .replace(/^- (.+)$/gm, "<li>$1</li>")
+      .replace(/\n{2,}/g, "</p><p>")
+      .replace(/\n/g, "<br/>");
+    body = "<p>" + body + "</p>";
+
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Relatório de Investigação — ${escapeHtml(groupName || "Grupo")}</title>
+<style>
+  @page { size: A4; margin: 22mm 18mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    color: #2f2a22;
+    line-height: 1.55;
+    font-size: 12.5px;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px;
+    background: white;
+  }
+  .doc-header {
+    border-bottom: 3px solid #24413b;
+    padding-bottom: 14px;
+    margin-bottom: 24px;
+  }
+  .doc-header .eyebrow {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #b5652f;
+  }
+  .doc-header h1 { font-size: 20px; margin: 6px 0; color: #24413b; }
+  .approval-stamp {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 10px;
+    border: 1.5px solid #7a8c4f;
+    color: #4c5c2c;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 3px;
+  }
+  .approval-stamp.stamp-pending { border-color: #b5652f; color: #8a4a20; }
+  .approval-stamp.stamp-draft { border-color: #cbbfa4; color: #6b634c; }
+  .approval-stamp.stamp-revision { border-color: #9c4a3c; color: #9c4a3c; }
+  h1 { font-size: 17px; color: #24413b; margin-top: 22px; }
+  h2 { font-size: 14px; color: #24413b; border-bottom: 1px solid #cbbfa4; padding-bottom: 4px; margin-top: 20px; }
+  h3 { font-size: 12.5px; color: #b5652f; margin-top: 14px; margin-bottom: 4px; }
+  li { margin-left: 18px; }
+  p { margin: 6px 0; }
+  .doc-footer {
+    margin-top: 32px;
+    padding-top: 10px;
+    border-top: 1px solid #cbbfa4;
+    font-size: 10px;
+    color: #6b634c;
+    font-family: 'Courier New', monospace;
+  }
+  @media print {
+    body { font-size: 12px; padding: 0; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="doc-header">
+    <span class="eyebrow">Lagamar Investiga · Estudo de Meio · Lagamar Paulista</span>
+    <h1>Relatório de Investigação — ${escapeHtml(groupName || "Grupo")}</h1>
+    <span class="approval-stamp ${stampCls || "stamp-pending"}">${escapeHtml(stampText || "")}</span>
+  </div>
+  ${body}
+  <div class="doc-footer">
+    Documento gerado por Lagamar Investiga — Laboratório de Investigação Digital.<br/>
+    As interpretações e hipóteses acima são de autoria do grupo de estudantes.
+  </div>
+</body>
+</html>`;
+  }
+
+  /** Renderiza a prévia do relatório como documento formatado dentro de
+   *  um iframe, dado o container e o registro de submissão. */
+  function renderReportDocumentPreview(containerId, sub, stampText, stampCls) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const groupName = sub.investigations?.groups?.display_name;
+    const html = markdownReportToDocumentHtml(sub.report_markdown, groupName, stampText, stampCls);
+    container.innerHTML = "";
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("title", "Relatório completo do grupo");
+    iframe.style.width = "100%";
+    iframe.style.height = "420px";
+    iframe.style.border = "1px solid var(--linha)";
+    iframe.style.borderRadius = "3px";
+    iframe.style.background = "white";
+    container.appendChild(iframe);
+    iframe.srcdoc = html;
+  }
+
+  /** Abre o relatório em uma nova aba já pronta para impressão/PDF —
+   *  usado pelo botão "Baixar PDF" no painel do professor. */
+  function openReportPdfPrintView(sub, stampText, stampCls) {
+    const groupName = sub.investigations?.groups?.display_name;
+    const html = markdownReportToDocumentHtml(sub.report_markdown, groupName, stampText, stampCls);
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast("O navegador bloqueou a janela de impressão. Permita pop-ups para este site e tente novamente.");
+      return;
+    }
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+    };
+  }
+
   // -----------------------------------------------------------------
   // Autenticação simples (mesmo padrão do protótipo anterior — barreira
   // de uso, não segurança real; ver GUIA-DO-PROFESSOR.md)
@@ -2399,9 +2534,10 @@ window.LagamarAPI.submissions = {
             <span class="provenance-note">Enviado em ${fmtDate(sub.submitted_at)}</span>
           </div>
           <p style="font-style:italic; margin:12px 0 4px;">"${escapeHtml(inv?.headline || "sem manchete registrada")}"</p>
-          <details style="margin:10px 0;">
+          <details style="margin:10px 0;" data-report-details="${sub.id}">
             <summary style="cursor:pointer; font-size:0.85rem; font-weight:600; color:var(--agua-salobra-forte);">Ver relatório completo</summary>
-            <div class="report-preview" style="margin-top:8px; max-height:280px;">${escapeHtml(sub.report_markdown)}</div>
+            <div id="report-doc-${sub.id}" style="margin-top:8px;"><p class="hint">Carregando…</p></div>
+            <button class="btn-secondary" data-print-report="${sub.id}" type="button" style="margin-top:8px; font-size:0.8rem;">🖨️ Baixar/imprimir em PDF</button>
           </details>
           <div class="field">
             <label style="font-size:0.8rem;" for="fb-${sub.id}">Comentário para o grupo</label>
@@ -2415,6 +2551,26 @@ window.LagamarAPI.submissions = {
         </div>`;
       })
       .join("");
+
+    // Só monta o documento (iframe) quando o <details> é de fato aberto,
+    // para não gerar dezenas de iframes ocultos à toa na lista.
+    const pendingByid = Object.fromEntries(pending.map((s) => [s.id, s]));
+    el.querySelectorAll("[data-report-details]").forEach((details) => {
+      let rendered = false;
+      details.addEventListener("toggle", () => {
+        if (details.open && !rendered) {
+          rendered = true;
+          const sub = pendingByid[details.dataset.reportDetails];
+          renderReportDocumentPreview(`report-doc-${sub.id}`, sub, "Aguardando aprovação do professor", "stamp-pending");
+        }
+      });
+    });
+    el.querySelectorAll("[data-print-report]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const sub = pendingByid[btn.dataset.printReport];
+        openReportPdfPrintView(sub, "Aguardando aprovação do professor", "stamp-pending");
+      });
+    });
 
     el.querySelectorAll("[data-remove-report]").forEach((btn) => {
       btn.addEventListener("click", () => confirmAndRemoveInvestigation(btn.dataset.removeReport, btn.dataset.groupName, loadApprovals));
@@ -2494,9 +2650,10 @@ window.LagamarAPI.submissions = {
             <span class="provenance-note">Aprovado em ${fmtDate(sub.reviewed_at)}</span>
           </div>
           <p style="font-style:italic; margin:12px 0 4px;">"${escapeHtml(inv?.headline || "sem manchete registrada")}"</p>
-          <details style="margin:10px 0;">
+          <details style="margin:10px 0;" data-report-details="${sub.id}">
             <summary style="cursor:pointer; font-size:0.85rem; font-weight:600; color:var(--agua-salobra-forte);">Ver relatório completo</summary>
-            <div class="report-preview" style="margin-top:8px; max-height:280px;">${escapeHtml(sub.report_markdown)}</div>
+            <div id="report-doc-${sub.id}" style="margin-top:8px;"><p class="hint">Carregando…</p></div>
+            <button class="btn-secondary" data-print-report="${sub.id}" type="button" style="margin-top:8px; font-size:0.8rem;">🖨️ Baixar/imprimir em PDF</button>
           </details>
           <div class="field">
             <label style="font-size:0.8rem;" for="cancel-fb-${inv?.id}">Motivo da correção (o grupo vai ver este comentário)</label>
@@ -2508,6 +2665,26 @@ window.LagamarAPI.submissions = {
         </div>`;
       })
       .join("");
+
+    const approvedById = Object.fromEntries(approved.map((s) => [s.id, s]));
+    el.querySelectorAll("[data-report-details]").forEach((details) => {
+      let rendered = false;
+      details.addEventListener("toggle", () => {
+        if (details.open && !rendered) {
+          rendered = true;
+          const sub = approvedById[details.dataset.reportDetails];
+          const stampText = `✓ Aprovado pelo professor em ${sub.reviewed_at ? new Date(sub.reviewed_at).toLocaleString("pt-BR") : "—"}`;
+          renderReportDocumentPreview(`report-doc-${sub.id}`, sub, stampText, "stamp-approved");
+        }
+      });
+    });
+    el.querySelectorAll("[data-print-report]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const sub = approvedById[btn.dataset.printReport];
+        const stampText = `✓ Aprovado pelo professor em ${sub.reviewed_at ? new Date(sub.reviewed_at).toLocaleString("pt-BR") : "—"}`;
+        openReportPdfPrintView(sub, stampText, "stamp-approved");
+      });
+    });
 
     el.querySelectorAll("[data-cancel-approval]").forEach((btn) => {
       btn.addEventListener("click", async () => {
