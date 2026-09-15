@@ -482,6 +482,25 @@ table.data-table th, table.data-table td {
 }
 table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.03em; color: #6b634c; }
 
+/* Cabeçalhos editáveis da tabela "Passando a Limpo" */
+table.data-table th .table-header-input {
+  border: none; background: transparent; padding: 2px 4px; width: 100%;
+  font-family: var(--font-mono); font-size: 0.74rem; text-transform: uppercase;
+  letter-spacing: 0.03em; color: var(--lodo); font-weight: 700;
+}
+table.data-table th .table-header-input:focus {
+  background: white; border-radius: 3px; outline: 1.5px solid var(--agua-salobra);
+}
+table.data-table th { display: table-cell; }
+table.data-table th > div, table.data-table th {
+  position: relative;
+}
+.table-header-remove {
+  padding: 2px 5px !important; font-size: 10px !important; margin-left: 4px;
+  opacity: 0.5;
+}
+.table-header-remove:hover { opacity: 1; }
+
 .evidence-editor {
   display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
   border-top: 1px dashed var(--linha); padding-top: 14px; margin-top: 16px;
@@ -1265,37 +1284,69 @@ table.teacher-table .headline-cell { font-style: italic; color: #4a4436; max-wid
       <div class="teacher-header">
         <div>
           <h1>Comparar grupos</h1>
-          <p>Veja lado a lado o que cada grupo registrou para a mesma rodada e atividade — útil para identificar padrões, divergências e grupos que precisam de apoio.</p>
+          <p>Veja lado a lado o que cada grupo registrou — por atividade/rodada, ou pelas tabelas "Passando a Limpo" que usam a mesma categoria.</p>
         </div>
       </div>
-      <div class="comparison-toolbar">
-        <div class="field" style="margin:0;">
-          <label for="compare-class">Turma</label>
-          <select id="compare-class">
-            <option value="">Todas as turmas</option>
-          </select>
-        </div>
-        <div class="field" style="margin:0;">
-          <label for="compare-round">Rodada</label>
-          <select id="compare-round">
-            <option value="">Selecione a rodada</option>
-            <option value="1">Rodada 1</option>
-            <option value="2">Rodada 2</option>
-            <option value="3">Rodada 3</option>
-          </select>
-        </div>
-        <div class="field" style="margin:0;">
-          <label for="compare-activity">Atividade</label>
-          <select id="compare-activity">
-            <option value="">Selecione a atividade</option>
-          </select>
-        </div>
-        <button class="btn-primary" id="btn-run-comparison" type="button">Comparar</button>
+
+      <div class="panel-tabs" style="margin-bottom:20px;">
+        <button class="panel-tab active" data-compare-tab="activity" type="button">Por atividade</button>
+        <button class="panel-tab" data-compare-tab="table" type="button">Por categoria de tabela</button>
       </div>
-      <div id="comparison-content">
-        <div class="teacher-empty">
-          <span class="emoji">🔍</span>
-          Selecione uma rodada e uma atividade para comparar os grupos que investigaram o mesmo tema.
+
+      <div id="compare-tab-activity">
+        <div class="comparison-toolbar">
+          <div class="field" style="margin:0;">
+            <label for="compare-class">Turma</label>
+            <select id="compare-class">
+              <option value="">Todas as turmas</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label for="compare-round">Rodada</label>
+            <select id="compare-round">
+              <option value="">Selecione a rodada</option>
+              <option value="1">Rodada 1</option>
+              <option value="2">Rodada 2</option>
+              <option value="3">Rodada 3</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label for="compare-activity">Atividade</label>
+            <select id="compare-activity">
+              <option value="">Selecione a atividade</option>
+            </select>
+          </div>
+          <button class="btn-primary" id="btn-run-comparison" type="button">Comparar</button>
+        </div>
+        <div id="comparison-content">
+          <div class="teacher-empty">
+            <span class="emoji">🔍</span>
+            Selecione uma rodada e uma atividade para comparar os grupos que investigaram o mesmo tema.
+          </div>
+        </div>
+      </div>
+
+      <div id="compare-tab-table" style="display:none;">
+        <div class="comparison-toolbar">
+          <div class="field" style="margin:0;">
+            <label for="compare-table-class">Turma</label>
+            <select id="compare-table-class">
+              <option value="">Todas as turmas</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label for="compare-table-category">Categoria da tabela</label>
+            <select id="compare-table-category">
+              <option value="">Selecione a categoria</option>
+            </select>
+          </div>
+          <button class="btn-primary" id="btn-run-table-comparison" type="button">Comparar</button>
+        </div>
+        <div id="table-comparison-content">
+          <div class="teacher-empty">
+            <span class="emoji">📊</span>
+            Selecione uma categoria para ver lado a lado as tabelas "Passando a Limpo" que os grupos marcaram com essa categoria.
+          </div>
         </div>
       </div>
     </section>
@@ -1761,7 +1812,7 @@ const INVESTIGATION_COLUMNS = `
   consultancy_notes, patterns, observations, hypothesis, supporting_evidence,
   limiting_evidence, analytical_limits, work_bridge, headline, new_question,
   next_step, current_step, submission_status, submitted_at, reviewed_at,
-  teacher_feedback, created_at, updated_at
+  teacher_feedback, table_category, table_headers, created_at, updated_at
 `;
 
 window.LagamarAPI.investigations = {
@@ -1837,6 +1888,28 @@ window.LagamarAPI.investigations = {
         groups(id, group_number, display_name, class_id, classes(name, short_code))
       `)
       .order("updated_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  /** Lista investigações que usam a mesma categoria de tabela (Etapa 3),
+   *  para o professor comparar tabelas comparáveis entre si — mesmo que
+   *  sejam de rodadas/atividades diferentes, desde que o grupo tenha
+   *  marcado a mesma categoria (ex: "Pesca artesanal"). */
+  async listByTableCategory(category, classId) {
+    let query = window.sb
+      .from("investigations")
+      .select(`
+        ${INVESTIGATION_COLUMNS},
+        groups!inner(id, group_number, display_name, class_id, classes(name, short_code))
+      `)
+      .eq("table_category", category);
+
+    if (classId) {
+      query = query.eq("groups.class_id", classId);
+    }
+
+    const { data, error } = await query.order("group_id");
     if (error) throw error;
     return data;
   },
@@ -1986,6 +2059,33 @@ window.LagamarAPI.evidenceLog = {
   async remove(id) {
     const { error } = await window.sb.from("evidence_log").delete().eq("id", id);
     if (error) throw error;
+  },
+};
+
+</script>
+<script>
+/**
+ * api/tableCategories.js
+ * Categorias disponíveis para a tabela "Passando a Limpo" (Etapa 3).
+ * A categoria é o que garante comparabilidade entre grupos no painel
+ * do professor, mesmo com os nomes de coluna sendo livres — só tabelas
+ * da mesma categoria aparecem juntas na comparação.
+ */
+window.LagamarAPI = window.LagamarAPI || {};
+
+window.LagamarAPI.tableCategories = {
+  async list() {
+    const { data, error } = await window.sb
+      .from("table_categories")
+      .select("*")
+      .order("display_order");
+    if (error) throw error;
+    return data;
+  },
+
+  async getById(id) {
+    const all = await this.list();
+    return all.find((c) => c.id === id) || null;
   },
 };
 
@@ -2747,6 +2847,18 @@ window.LagamarAPI.submissions = {
 
   function initCompareRunner() {
     document.getElementById("btn-run-comparison").addEventListener("click", runComparison);
+    document.getElementById("btn-run-table-comparison").addEventListener("click", runTableComparison);
+
+    document.querySelectorAll("[data-compare-tab]").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll("[data-compare-tab]").forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        const target = tab.dataset.compareTab;
+        document.getElementById("compare-tab-activity").style.display = target === "activity" ? "block" : "none";
+        document.getElementById("compare-tab-table").style.display = target === "table" ? "block" : "none";
+        if (target === "table") loadTableComparisonFilters();
+      });
+    });
   }
 
   async function runComparison() {
@@ -2772,6 +2884,118 @@ window.LagamarAPI.submissions = {
     } catch (err) {
       content.innerHTML = `<div class="teacher-empty">Não foi possível comparar: ${escapeHtml(err.message)}</div>`;
     }
+  }
+
+  // -----------------------------------------------------------------
+  // COMPARAÇÃO POR CATEGORIA DE TABELA (Passando a Limpo)
+  // -----------------------------------------------------------------
+  async function loadTableComparisonFilters() {
+    const classSelect = document.getElementById("compare-table-class");
+    const categorySelect = document.getElementById("compare-table-category");
+
+    if (classSelect.options.length <= 1) {
+      try {
+        const classes = await window.LagamarAPI.classesGroups.listClasses();
+        classes.forEach((c) => {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = c.name;
+          classSelect.appendChild(opt);
+        });
+      } catch (err) {
+        toast("Não foi possível carregar as turmas: " + err.message);
+      }
+    }
+
+    if (categorySelect.options.length <= 1) {
+      try {
+        const categories = await window.LagamarAPI.tableCategories.list();
+        categories.forEach((c) => {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = c.label;
+          categorySelect.appendChild(opt);
+        });
+      } catch (err) {
+        toast("Não foi possível carregar as categorias: " + err.message);
+      }
+    }
+  }
+
+  async function runTableComparison() {
+    const category = document.getElementById("compare-table-category").value;
+    const classId = document.getElementById("compare-table-class").value || null;
+    const content = document.getElementById("table-comparison-content");
+
+    if (!category) {
+      toast("Selecione a categoria da tabela para comparar.");
+      return;
+    }
+
+    content.innerHTML = '<div class="loading-state">Carregando comparação…</div>';
+
+    try {
+      const results = await window.LagamarAPI.investigations.listByTableCategory(category, classId);
+      renderTableComparisonGrid(results);
+    } catch (err) {
+      content.innerHTML = `<div class="teacher-empty">Não foi possível comparar: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  /** Renderiza a comparação de tabelas "Passando a Limpo" da mesma
+   *  categoria, lado a lado. Diferente da comparação por atividade
+   *  (campos fixos de texto), aqui cada grupo pode ter um número e
+   *  nomes de colunas diferentes — por isso a grade lista os cabeçalhos
+   *  de cada grupo separadamente, seguidos das linhas de dados. */
+  async function renderTableComparisonGrid(results) {
+    const content = document.getElementById("table-comparison-content");
+    if (results.length === 0) {
+      content.innerHTML = '<div class="teacher-empty"><span class="emoji">📊</span>Nenhum grupo usou essa categoria de tabela ainda.</div>';
+      return;
+    }
+
+    content.innerHTML = '<div class="loading-state">Carregando linhas das tabelas…</div>';
+
+    // Busca as linhas de cada investigação em paralelo.
+    const withRows = await Promise.all(
+      results.map(async (inv) => {
+        try {
+          const rows = await window.LagamarAPI.tableRows.listForInvestigation(inv.id);
+          return { inv, rows };
+        } catch (e) {
+          return { inv, rows: [] };
+        }
+      })
+    );
+
+    const html = withRows
+      .map(({ inv, rows }) => {
+        const g = inv.groups;
+        const headers = inv.table_headers && inv.table_headers.length ? inv.table_headers : ["Local", "Variável", "Valor", "Unidade", "Observação"];
+        const nonEmptyRows = rows.filter((r) => (r.cells || []).some((c) => c && String(c).trim()));
+
+        let tableHtml;
+        if (nonEmptyRows.length === 0) {
+          tableHtml = '<p class="data-missing" style="margin:8px 0;">Nenhuma linha preenchida ainda.</p>';
+        } else {
+          tableHtml = '<table class="data-table"><thead><tr>' +
+            headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("") +
+            "</tr></thead><tbody>" +
+            nonEmptyRows
+              .map((r) => "<tr>" + headers.map((_, ci) => `<td>${escapeHtml(r.cells?.[ci] ?? "")}</td>`).join("") + "</tr>")
+              .join("") +
+            "</tbody></table>";
+        }
+
+        return `<div class="card">
+          <h3 style="margin-bottom:2px;">${escapeHtml(g?.display_name || "Grupo?")} <span style="font-family:var(--font-mono); font-size:11px; color:#8a8064;">${escapeHtml(g?.classes?.short_code || "")}</span></h3>
+          <p class="card-sub" style="margin:0 0 10px;">${inv.activity_number ? "Atividade " + inv.activity_number + " — " + escapeHtml(inv.activity_name || "") : "Atividade não informada"}${inv.analysis_round ? " · Rodada " + inv.analysis_round : ""}</p>
+          ${tableHtml}
+        </div>`;
+      })
+      .join("");
+
+    content.innerHTML = html;
   }
 
   const COMPARISON_ROWS = [

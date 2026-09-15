@@ -482,6 +482,25 @@ table.data-table th, table.data-table td {
 }
 table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.03em; color: #6b634c; }
 
+/* Cabeçalhos editáveis da tabela "Passando a Limpo" */
+table.data-table th .table-header-input {
+  border: none; background: transparent; padding: 2px 4px; width: 100%;
+  font-family: var(--font-mono); font-size: 0.74rem; text-transform: uppercase;
+  letter-spacing: 0.03em; color: var(--lodo); font-weight: 700;
+}
+table.data-table th .table-header-input:focus {
+  background: white; border-radius: 3px; outline: 1.5px solid var(--agua-salobra);
+}
+table.data-table th { display: table-cell; }
+table.data-table th > div, table.data-table th {
+  position: relative;
+}
+.table-header-remove {
+  padding: 2px 5px !important; font-size: 10px !important; margin-left: 4px;
+  opacity: 0.5;
+}
+.table-header-remove:hover { opacity: 1; }
+
 .evidence-editor {
   display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
   border-top: 1px dashed var(--linha); padding-top: 14px; margin-top: 16px;
@@ -1023,7 +1042,11 @@ table.data-table th { font-family: var(--font-mono); font-size: 0.74rem; text-tr
           <textarea id="f-rawData" style="min-height:160px;" placeholder="Cole aqui os dados brutos do Caderno de Campo..."></textarea>
         </div>
         <h3 style="margin-top:22px;">Tabela editável</h3>
-        <p class="card-sub">Adicione linhas com os registros do grupo. Colunas configuráveis.</p>
+        <p class="card-sub">Escolha uma categoria para a tabela e edite os nomes das colunas como quiser — a categoria é o que permite ao professor comparar sua tabela com a de outros grupos que registraram o mesmo tipo de dado.</p>
+        <div class="field" style="max-width:340px;">
+          <label for="f-table-category">Categoria da tabela</label>
+          <select id="f-table-category"></select>
+        </div>
         <div id="editable-table-wrap"></div>
         <button class="btn-secondary" id="btn-add-row" type="button" style="margin-top:10px;">+ Adicionar linha</button>
       </div>
@@ -1696,7 +1719,7 @@ const INVESTIGATION_COLUMNS = `
   consultancy_notes, patterns, observations, hypothesis, supporting_evidence,
   limiting_evidence, analytical_limits, work_bridge, headline, new_question,
   next_step, current_step, submission_status, submitted_at, reviewed_at,
-  teacher_feedback, created_at, updated_at
+  teacher_feedback, table_category, table_headers, created_at, updated_at
 `;
 
 window.LagamarAPI.investigations = {
@@ -1772,6 +1795,28 @@ window.LagamarAPI.investigations = {
         groups(id, group_number, display_name, class_id, classes(name, short_code))
       `)
       .order("updated_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  /** Lista investigações que usam a mesma categoria de tabela (Etapa 3),
+   *  para o professor comparar tabelas comparáveis entre si — mesmo que
+   *  sejam de rodadas/atividades diferentes, desde que o grupo tenha
+   *  marcado a mesma categoria (ex: "Pesca artesanal"). */
+  async listByTableCategory(category, classId) {
+    let query = window.sb
+      .from("investigations")
+      .select(`
+        ${INVESTIGATION_COLUMNS},
+        groups!inner(id, group_number, display_name, class_id, classes(name, short_code))
+      `)
+      .eq("table_category", category);
+
+    if (classId) {
+      query = query.eq("groups.class_id", classId);
+    }
+
+    const { data, error } = await query.order("group_id");
     if (error) throw error;
     return data;
   },
@@ -1921,6 +1966,33 @@ window.LagamarAPI.evidenceLog = {
   async remove(id) {
     const { error } = await window.sb.from("evidence_log").delete().eq("id", id);
     if (error) throw error;
+  },
+};
+
+</script>
+<script>
+/**
+ * api/tableCategories.js
+ * Categorias disponíveis para a tabela "Passando a Limpo" (Etapa 3).
+ * A categoria é o que garante comparabilidade entre grupos no painel
+ * do professor, mesmo com os nomes de coluna sendo livres — só tabelas
+ * da mesma categoria aparecem juntas na comparação.
+ */
+window.LagamarAPI = window.LagamarAPI || {};
+
+window.LagamarAPI.tableCategories = {
+  async list() {
+    const { data, error } = await window.sb
+      .from("table_categories")
+      .select("*")
+      .order("display_order");
+    if (error) throw error;
+    return data;
+  },
+
+  async getById(id) {
+    const all = await this.list();
+    return all.find((c) => c.id === id) || null;
   },
 };
 
@@ -2768,6 +2840,8 @@ window.LagamarImport = (function () {
     materialsAccessible: "",
     rawData: "",
     tableRows: [], // linhas carregadas/salvas via api/dataPoints.js (table_rows)
+    tableCategory: "outro",
+    tableHeaders: ["Local", "Variável", "Valor", "Unidade", "Observação"],
     questions: ["", "", ""],
     consultancyNotes: "",
     patterns: "",
@@ -2819,6 +2893,8 @@ window.LagamarImport = (function () {
       materialsAccessible: inv.materials_accessible || "",
       rawData: inv.raw_data || "",
       tableRows: rows.map((r) => ({ id: r.id, cells: r.cells })),
+      tableCategory: inv.table_category || "outro",
+      tableHeaders: inv.table_headers && inv.table_headers.length ? inv.table_headers : ["Local", "Variável", "Valor", "Unidade", "Observação"],
       questions: inv.questions || ["", "", ""],
       consultancyNotes: inv.consultancy_notes || "",
       patterns: inv.patterns || "",
@@ -3387,43 +3463,156 @@ window.LagamarImport = (function () {
   // -----------------------------------------------------------------
   // Etapa 3 — Passando a limpo (tabela editável)
   // -----------------------------------------------------------------
-  const TABLE_COLUMNS = ["Local", "Variável", "Valor", "Unidade", "Observação"];
+  /** Cabeçalhos padrão usados só quando a investigação ainda não tem
+   *  nenhum table_headers salvo (ex: investigação criada antes desta
+   *  funcionalidade existir). Depois disso, os cabeçalhos reais vêm do
+   *  banco (state.tableHeaders) e são editáveis pelo grupo. */
+  const DEFAULT_TABLE_HEADERS = ["Local", "Variável", "Valor", "Unidade", "Observação"];
 
-  function initStep3() {
+  async function initStep3() {
     bindText("f-rawData", "rawData");
-    document.getElementById("btn-add-row").addEventListener("click", async () => {
+
+    const categorySelect = document.getElementById("f-table-category");
+    if (categorySelect && !categorySelect.dataset.loaded) {
+      categorySelect.dataset.loaded = "true";
       try {
-        const newCells = TABLE_COLUMNS.map(() => "");
-        const saved = await window.LagamarAPI.tableRows.add(state.investigationId, newCells, state.tableRows.length);
-        state.tableRows.push({ id: saved.id, cells: saved.cells });
-        renderEditableTable();
+        const categories = await window.LagamarAPI.tableCategories.list();
+        categorySelect.innerHTML = categories
+          .map((c) => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.label)}</option>`)
+          .join("");
+        categorySelect.value = state.tableCategory || "outro";
       } catch (e) {
-        toast("Não foi possível adicionar a linha. Verifique a internet.");
+        categorySelect.innerHTML = '<option value="outro">Outro / Personalizado</option>';
       }
-    });
+
+      categorySelect.addEventListener("change", async () => {
+        const newCategory = categorySelect.value;
+        state.tableCategory = newCategory;
+        try {
+          await window.LagamarAPI.investigations.update(state.investigationId, { table_category: newCategory });
+          toast("Categoria da tabela atualizada.");
+        } catch (e) {
+          toast("Não foi possível salvar a categoria. Verifique a internet.");
+        }
+      });
+    }
+
+    const addRowBtn = document.getElementById("btn-add-row");
+    if (addRowBtn && !addRowBtn.dataset.bound) {
+      addRowBtn.dataset.bound = "true";
+      addRowBtn.addEventListener("click", async () => {
+        try {
+          const headers = state.tableHeaders && state.tableHeaders.length ? state.tableHeaders : DEFAULT_TABLE_HEADERS;
+          const newCells = headers.map(() => "");
+          const saved = await window.LagamarAPI.tableRows.add(state.investigationId, newCells, state.tableRows.length);
+          state.tableRows.push({ id: saved.id, cells: saved.cells });
+          renderEditableTable();
+        } catch (e) {
+          toast("Não foi possível adicionar a linha. Verifique a internet.");
+        }
+      });
+    }
+
     renderEditableTable();
+  }
+
+  /** Adiciona uma nova coluna ao final, com nome genérico editável, e
+   *  uma célula vazia correspondente em cada linha já existente. */
+  async function addTableColumn() {
+    const headers = (state.tableHeaders && state.tableHeaders.length ? state.tableHeaders : [...DEFAULT_TABLE_HEADERS]).slice();
+    headers.push("Nova coluna");
+    state.tableHeaders = headers;
+
+    state.tableRows.forEach((row) => row.cells.push(""));
+
+    try {
+      await window.LagamarAPI.investigations.update(state.investigationId, { table_headers: headers });
+      await Promise.all(state.tableRows.map((row) => window.LagamarAPI.tableRows.update(row.id, row.cells)));
+      renderEditableTable();
+    } catch (e) {
+      toast("Não foi possível adicionar a coluna. Verifique a internet.");
+    }
+  }
+
+  /** Remove uma coluna pelo índice, junto com a célula correspondente
+   *  em cada linha. Exige pelo menos uma coluna restando. */
+  async function removeTableColumn(colIndex) {
+    const headers = (state.tableHeaders && state.tableHeaders.length ? state.tableHeaders : [...DEFAULT_TABLE_HEADERS]).slice();
+    if (headers.length <= 1) {
+      toast("A tabela precisa ter pelo menos uma coluna.");
+      return;
+    }
+    headers.splice(colIndex, 1);
+    state.tableHeaders = headers;
+    state.tableRows.forEach((row) => row.cells.splice(colIndex, 1));
+
+    try {
+      await window.LagamarAPI.investigations.update(state.investigationId, { table_headers: headers });
+      await Promise.all(state.tableRows.map((row) => window.LagamarAPI.tableRows.update(row.id, row.cells)));
+      renderEditableTable();
+    } catch (e) {
+      toast("Não foi possível remover a coluna. Verifique a internet.");
+    }
   }
 
   function renderEditableTable() {
     const wrap = document.getElementById("editable-table-wrap");
-    if (state.tableRows.length === 0) {
-      wrap.innerHTML = '<p class="data-missing">Nenhuma linha adicionada. Clique em "Adicionar linha" para começar a tabela do grupo.</p>';
-      return;
-    }
+    const headers = state.tableHeaders && state.tableHeaders.length ? state.tableHeaders : DEFAULT_TABLE_HEADERS;
+
+    // Cabeçalhos sempre aparecem (editáveis), mesmo sem nenhuma linha ainda —
+    // o grupo pode ajustar a estrutura da tabela antes de começar a preencher.
     let html = '<table class="data-table"><thead><tr>';
-    TABLE_COLUMNS.forEach((c) => (html += `<th>${c}</th>`));
-    html += "<th></th></tr></thead><tbody>";
-    state.tableRows.forEach((row) => {
-      html += "<tr>";
-      row.cells.forEach((cell, ci) => {
-        html += `<td><input type="text" data-row-id="${row.id}" data-col="${ci}" value="${escapeHtml(cell)}" style="border:none; background:transparent; padding:4px; width:100%;" /></td>`;
-      });
-      html += `<td><button class="icon-btn" data-remove-row-id="${row.id}" type="button" style="padding:4px 8px;">✕</button></td>`;
-      html += "</tr>";
+    headers.forEach((h, ci) => {
+      html += `<th>
+        <input type="text" class="table-header-input" data-header-col="${ci}" value="${escapeHtml(h)}" placeholder="Nome da coluna" />
+        <button class="icon-btn table-header-remove" data-remove-col="${ci}" type="button" title="Remover esta coluna">✕</button>
+      </th>`;
     });
+    html += '<th><button class="icon-btn" id="btn-add-column" type="button" title="Adicionar coluna">+ Coluna</button></th></tr></thead><tbody>';
+
+    if (state.tableRows.length === 0) {
+      html += `<tr><td colspan="${headers.length + 1}"><p class="data-missing" style="margin:8px 0;">Nenhuma linha adicionada. Clique em "Adicionar linha" para começar.</p></td></tr>`;
+    } else {
+      state.tableRows.forEach((row) => {
+        html += "<tr>";
+        headers.forEach((_, ci) => {
+          const cellValue = row.cells[ci] ?? "";
+          html += `<td><input type="text" data-row-id="${row.id}" data-col="${ci}" value="${escapeHtml(cellValue)}" style="border:none; background:transparent; padding:4px; width:100%;" /></td>`;
+        });
+        html += `<td><button class="icon-btn" data-remove-row-id="${row.id}" type="button" style="padding:4px 8px;">✕</button></td>`;
+        html += "</tr>";
+      });
+    }
     html += "</tbody></table>";
     wrap.innerHTML = html;
 
+    // Cabeçalhos editáveis
+    let headerSaveTimer = null;
+    wrap.querySelectorAll(".table-header-input").forEach((inp) => {
+      inp.addEventListener("input", (e) => {
+        const ci = Number(e.target.dataset.headerCol);
+        const currentHeaders = (state.tableHeaders && state.tableHeaders.length ? state.tableHeaders : [...DEFAULT_TABLE_HEADERS]).slice();
+        currentHeaders[ci] = e.target.value;
+        state.tableHeaders = currentHeaders;
+
+        clearTimeout(headerSaveTimer);
+        headerSaveTimer = setTimeout(async () => {
+          try {
+            await window.LagamarAPI.investigations.update(state.investigationId, { table_headers: state.tableHeaders });
+          } catch (err) {
+            toast("Não foi possível salvar o nome da coluna. Verifique a internet.");
+          }
+        }, 600);
+      });
+    });
+
+    wrap.querySelectorAll("[data-remove-col]").forEach((btn) => {
+      btn.addEventListener("click", () => removeTableColumn(Number(btn.dataset.removeCol)));
+    });
+
+    document.getElementById("btn-add-column")?.addEventListener("click", addTableColumn);
+
+    // Células de dados
     let rowSaveTimer = null;
     wrap.querySelectorAll("input[data-row-id]").forEach((inp) => {
       inp.addEventListener("input", (e) => {
@@ -4094,10 +4283,11 @@ window.LagamarImport = (function () {
 
   function buildReportMarkdown() {
     const round = D.ANALYSIS_ROUNDS[state.analysisRound];
+    const headers = state.tableHeaders && state.tableHeaders.length ? state.tableHeaders : ["Local", "Variável", "Valor", "Unidade", "Observação"];
     const nonEmptyRows = state.tableRows.filter((r) => r.cells.some((c) => c && c.trim()));
     let tableMd = "";
     if (nonEmptyRows.length) {
-      tableMd = "| " + TABLE_COLUMNS.join(" | ") + " |\n" + "|" + TABLE_COLUMNS.map(() => "---").join("|") + "|\n";
+      tableMd = "| " + headers.join(" | ") + " |\n" + "|" + headers.map(() => "---").join("|") + "|\n";
       nonEmptyRows.forEach((r) => (tableMd += "| " + r.cells.join(" | ") + " |\n"));
     }
 
