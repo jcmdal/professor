@@ -1169,6 +1169,28 @@ table.teacher-table .headline-cell { font-style: italic; color: #4a4436; max-wid
   padding: 40px; text-align: center; color: #8a8064; font-family: var(--font-mono); font-size: 0.85rem;
 }
 
+/* --- Modo Dev (prototipo interno de APIs externas ao vivo) --- */
+.badge-externo { background: rgba(47,107,122,0.14); color: #1f4a55; }
+.dev-dot{ width:8px;height:8px;border-radius:50%; display:inline-block; }
+.dev-dot-loading{ background: var(--ferrugem); animation:devpulse 1.2s infinite; }
+.dev-dot-ok{ background: var(--junco); }
+.dev-dot-err{ background: var(--alerta); }
+@keyframes devpulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+.dev-legend{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-size:12.5px; color:#6b634c; }
+.dev-legend-item{ display:flex; align-items:center; gap:6px; }
+.dev-swatch{ width:10px;height:10px;border-radius:2px; }
+.dev-chart-box{ position:relative; }
+.dev-hover-col{ cursor:crosshair; }
+.dev-tooltip{
+  position:absolute; pointer-events:none; background:var(--lodo); color:var(--areia-clara);
+  font-size:11.5px; padding:6px 9px; border-radius:6px; line-height:1.4; white-space:nowrap;
+  transform:translate(-50%,-112%); opacity:0; transition:opacity .1s; z-index:5;
+}
+.dev-table{ width:100%; border-collapse:collapse; margin-top:10px; font-size:12.5px; font-variant-numeric:tabular-nums; }
+.dev-table th, .dev-table td{ text-align:right; padding:5px 8px; border-bottom:1px solid var(--linha); }
+.dev-table th:first-child, .dev-table td:first-child{ text-align:left; }
+.dev-error-box{ padding:12px 14px; border-radius:var(--radius); font-size:13px; color:var(--lodo); background:rgba(156,74,60,0.08); border:1.5px dashed var(--alerta); }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -1214,6 +1236,9 @@ table.teacher-table .headline-cell { font-style: italic; color: #4a4436; max-wid
     </button>
     <button class="teacher-nav-item" data-view="compare" type="button">
       🔍 Comparar grupos
+    </button>
+    <button class="teacher-nav-item" data-view="devmode" type="button">
+      🔧 Modo Dev <span class="badge badge-contexto" style="margin-left:4px;">interno</span>
     </button>
 
     <div class="sidebar-footer">
@@ -1348,6 +1373,51 @@ table.teacher-table .headline-cell { font-style: italic; color: #4a4436; max-wid
             Selecione uma categoria para ver lado a lado as tabelas "Passando a Limpo" que os grupos marcaram com essa categoria.
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- MODO DEV (prototipo interno de APIs externas ao vivo) -->
+    <section id="view-devmode" class="teacher-view" style="display:none;">
+      <div class="teacher-header">
+        <div>
+          <h1>🔧 Modo Dev <span class="badge badge-contexto" style="margin-left:6px;">protótipo interno</span></h1>
+          <p>Visualizações com dados de APIs externas reais, buscadas ao vivo no seu navegador. Uso interno para revisar com a coordenação — não faz parte da experiência do aluno nem do restante do painel do professor. Fica trancado com um segundo código, mesmo depois de entrar com a senha do professor.</p>
+        </div>
+      </div>
+
+      <div id="dev-gate" class="card" style="max-width:420px;">
+        <h3>Código de acesso do Modo Dev</h3>
+        <div class="field" style="margin-bottom:10px;">
+          <input type="password" id="dev-code-input" placeholder="••••••••••" autocomplete="off" />
+        </div>
+        <button class="btn-primary" id="btn-dev-unlock" type="button">Desbloquear →</button>
+        <p class="hint" id="dev-gate-error" style="color:var(--alerta); display:none; margin-top:10px;">Código incorreto.</p>
+      </div>
+
+      <div id="dev-content" style="display:none;">
+        <div class="card" style="background:rgba(47,107,122,0.06); border-color:rgba(47,107,122,0.3);">
+          <p style="margin:0; font-size:0.88rem; color:#2f2a22;">🧪 As duas visualizações abaixo chamam as APIs do IBGE e da Open-Meteo ao vivo, direto no seu navegador — usam uma categoria de procedência que não existe na versão do aluno: <span class="badge badge-externo">dado externo verificado</span>. Nenhum dado de aluno é enviado a essas APIs.</p>
+        </div>
+
+        <div class="card">
+          <h3>População estimada — Iguape × Cananéia</h3>
+          <p class="card-sub">API do IBGE (Agregados — tabela 6579, Estimativas de população)</p>
+          <div id="dev-ibge-status" class="hint" style="display:flex; align-items:center; gap:7px; margin-bottom:12px;">
+            <span class="dev-dot dev-dot-loading"></span><span>Consultando servicodados.ibge.gov.br…</span>
+          </div>
+          <div id="dev-ibge-body"></div>
+        </div>
+
+        <div class="card">
+          <h3>Nível do mar — 27 a 29 de maio de 2026</h3>
+          <p class="card-sub">API Open-Meteo Marine — não é a tábua oficial da Marinha do Brasil (nível modelado: maré astronômica + efeitos meteorológicos), buscada na data exata da viagem, com fallback automático para o modelo histórico ERA5-Ocean.</p>
+          <div id="dev-mare-status" class="hint" style="display:flex; align-items:center; gap:7px; margin-bottom:12px;">
+            <span class="dev-dot dev-dot-loading"></span><span>Consultando marine-api.open-meteo.com…</span>
+          </div>
+          <div id="dev-mare-body"></div>
+        </div>
+
+        <p class="hint">Se ficar em "consultando..." por muito tempo, verifique sua conexão com a internet — este painel já depende de internet (Supabase), então o fetch dessas APIs usa a mesma conexão.</p>
       </div>
     </section>
 
@@ -3078,11 +3148,249 @@ window.LagamarAPI.submissions = {
   }
 
   // -----------------------------------------------------------------
+  // MODO DEV — visualizacoes com APIs externas ao vivo (protótipo interno)
+  // Codigo simples, nao e autenticacao de verdade — e so uma segunda
+  // barreira de uso alem da senha do professor (mesmo espirito da nota em
+  // GUIA-DO-PROFESSOR.md sobre a senha do professor).
+  // -----------------------------------------------------------------
+  const DEV_CODE = "lagamar-dev-2026";
+  const DEV_TRIP_START = "2026-05-27";
+  const DEV_TRIP_END = "2026-05-29";
+  const DEV_IBGE_URL =
+    "https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/-6/variaveis/9324?localidades=N6[3520301,3509908]";
+  const DEV_IBGE_LOCS = [
+    { name: "Iguape", code: "3520301", color: "var(--agua-salobra-forte)" },
+    { name: "Cananéia", code: "3509908", color: "var(--ferrugem)" },
+  ];
+  const DEV_MARE_LOCS = [
+    { name: "Iguape", lat: -24.7081, lon: -47.5555, color: "var(--agua-salobra-forte)" },
+    { name: "Cananéia", lat: -25.0122, lon: -47.9267, color: "var(--ferrugem)" },
+  ];
+
+  function devMarineUrl(loc, useEra5) {
+    let url =
+      "https://marine-api.open-meteo.com/v1/marine?latitude=" + loc.lat +
+      "&longitude=" + loc.lon +
+      "&hourly=sea_level_height_msl&timezone=America%2FSao_Paulo" +
+      "&start_date=" + DEV_TRIP_START + "&end_date=" + DEV_TRIP_END;
+    if (useEra5) url += "&models=era5_ocean";
+    return url;
+  }
+
+  async function devFetchMarine(loc) {
+    let res = await fetch(devMarineUrl(loc, false));
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    let data = await res.json();
+    const vals = (data && data.hourly && data.hourly.sea_level_height_msl) || [];
+    const allNull = vals.length === 0 || vals.every((v) => v === null || v === undefined);
+    if (allNull) {
+      res = await fetch(devMarineUrl(loc, true));
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      data = await res.json();
+    }
+    return data;
+  }
+
+  function devFmtInt(n) {
+    if (n === null || n === undefined || Number.isNaN(n)) return "—";
+    return new Intl.NumberFormat("pt-BR").format(Math.round(n));
+  }
+  function devFmtM(n) {
+    if (n === null || n === undefined || Number.isNaN(n)) return "—";
+    return (Math.round(n * 100) / 100).toFixed(2).replace(".", ",") + " m";
+  }
+  function devNiceMax(max) {
+    if (!(max > 0)) return 1;
+    const mag = Math.pow(10, Math.floor(Math.log10(max)));
+    return Math.ceil(max / mag) * mag;
+  }
+
+  function devSetStatus(prefix, state, text) {
+    const el = document.getElementById(prefix + "-status");
+    if (!el) return;
+    const dotClass = state === "ok" ? "dev-dot-ok" : state === "err" ? "dev-dot-err" : "dev-dot-loading";
+    el.innerHTML = '<span class="dev-dot ' + dotClass + '"></span><span>' + escapeHtml(text) + "</span>";
+  }
+
+  function devRenderError(containerId, message) {
+    document.getElementById(containerId).innerHTML =
+      '<div class="dev-error-box">⚠️ ' + escapeHtml(message) + "</div>";
+  }
+
+  function devRenderLineChart(containerId, opts) {
+    const w = 640, h = 260, padL = 54, padR = 16, padT = 16, padB = 40;
+    const plotW = w - padL - padR, plotH = h - padT - padB;
+    const allVals = opts.series.flatMap((s) => s.points.map((p) => p.value)).filter((v) => v !== null && v !== undefined && !Number.isNaN(v));
+    const minV = Math.min(0, ...allVals);
+    const maxV = devNiceMax(Math.max.apply(null, allVals.length ? allVals : [1])) || 1;
+    const n = opts.series[0].points.length;
+    const xFor = (i) => padL + (n <= 1 ? plotW / 2 : (i / (n - 1)) * plotW);
+    const yFor = (v) => padT + plotH - ((v - minV) / (maxV - minV || 1)) * plotH;
+
+    let svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;height:auto;" role="img" aria-label="' + escapeHtml(opts.ariaLabel || "") + '">';
+    const steps = 4;
+    for (let i = 0; i <= steps; i++) {
+      const v = minV + ((maxV - minV) * i) / steps;
+      const y = yFor(v);
+      svg += '<line x1="' + padL + '" y1="' + y + '" x2="' + (w - padR) + '" y2="' + y + '" stroke="var(--linha)" stroke-width="1"/>';
+      svg += '<text x="' + (padL - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="10" fill="#8a8064">' + escapeHtml(opts.yFmt(v)) + '</text>';
+    }
+    opts.series[0].points.forEach((p, i) => {
+      if (i % opts.xLabelEvery !== 0 && i !== n - 1) return;
+      svg += '<text x="' + xFor(i) + '" y="' + (h - padB + 18) + '" text-anchor="middle" font-size="10" fill="#8a8064">' + escapeHtml(p.label) + '</text>';
+    });
+    opts.series.forEach((s) => {
+      let d = "";
+      s.points.forEach((p, i) => {
+        if (p.value === null || p.value === undefined || Number.isNaN(p.value)) return;
+        d += (d === "" ? "M" : "L") + xFor(i) + "," + yFor(p.value) + " ";
+      });
+      svg += '<path d="' + d + '" fill="none" stroke="' + s.color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+      const last = s.points[s.points.length - 1];
+      if (last && last.value !== null && last.value !== undefined && !Number.isNaN(last.value)) {
+        svg += '<circle cx="' + xFor(n - 1) + '" cy="' + yFor(last.value) + '" r="4" fill="' + s.color + '" stroke="var(--areia-clara)" stroke-width="2"/>';
+      }
+    });
+    for (let i = 0; i < n; i++) {
+      svg += '<rect data-i="' + i + '" x="' + (xFor(i) - plotW / n / 2) + '" y="' + padT + '" width="' + plotW / n + '" height="' + plotH + '" fill="transparent" class="dev-hover-col"/>';
+    }
+    svg += "</svg>";
+
+    const legend =
+      '<div class="dev-legend">' +
+      opts.series.map((s) => '<div class="dev-legend-item"><span class="dev-swatch" style="background:' + s.color + '"></span>' + escapeHtml(s.name) + "</div>").join("") +
+      "</div>";
+
+    const tableRows = opts.series[0].points
+      .map(
+        (p, i) =>
+          "<tr><td>" + escapeHtml(p.label) + "</td>" +
+          opts.series.map((s) => "<td>" + escapeHtml(opts.yFmt(s.points[i].value)) + "</td>").join("") +
+          "</tr>"
+      )
+      .join("");
+    const table =
+      '<details style="margin-top:10px;"><summary class="hint" style="cursor:pointer;">Ver tabela de valores</summary>' +
+      '<table class="dev-table"><thead><tr><th></th>' +
+      opts.series.map((s) => "<th>" + escapeHtml(s.name) + "</th>").join("") +
+      "</tr></thead><tbody>" + tableRows + "</tbody></table></details>";
+
+    document.getElementById(containerId).innerHTML =
+      legend + '<div class="dev-chart-box">' + svg + '<div class="dev-tooltip" id="' + containerId + '-tooltip"></div></div>' + table;
+
+    const box = document.getElementById(containerId).querySelector(".dev-chart-box");
+    const tooltip = document.getElementById(containerId + "-tooltip");
+    const svgEl = box.querySelector("svg");
+    box.querySelectorAll(".dev-hover-col").forEach((rect) => {
+      rect.addEventListener("mousemove", () => {
+        const i = Number(rect.dataset.i);
+        const p = opts.series[0].points[i];
+        const svgRect = svgEl.getBoundingClientRect();
+        const boxRect = box.getBoundingClientRect();
+        const scaleX = svgRect.width / w;
+        const scaleY = svgRect.height / h;
+        const px = (svgRect.left - boxRect.left) + xFor(i) * scaleX;
+        const py = (svgRect.top - boxRect.top) + padT * scaleY;
+        tooltip.style.left = px + "px";
+        tooltip.style.top = py + "px";
+        tooltip.innerHTML =
+          escapeHtml(p.label) + "<br>" +
+          opts.series.map((s) => escapeHtml(s.name) + ": " + escapeHtml(opts.yFmt(s.points[i].value))).join("<br>");
+        tooltip.style.opacity = "1";
+      });
+      rect.addEventListener("mouseleave", () => {
+        tooltip.style.opacity = "0";
+      });
+    });
+  }
+
+  async function devLoadIBGE() {
+    try {
+      devSetStatus("dev-ibge", "loading", "Consultando servicodados.ibge.gov.br…");
+      const res = await fetch(DEV_IBGE_URL);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const json = await res.json();
+      const seriesByLoc = {};
+      json[0].resultados[0].series.forEach((s) => {
+        seriesByLoc[s.localidade.id] = s.serie;
+      });
+      const years = Object.keys(seriesByLoc[DEV_IBGE_LOCS[0].code]).sort();
+      const series = DEV_IBGE_LOCS.map((loc) => ({
+        name: loc.name,
+        color: loc.color,
+        points: years.map((y) => ({ label: y, value: Number(seriesByLoc[loc.code][y]) })),
+      }));
+      devRenderLineChart("dev-ibge-body", {
+        series,
+        yFmt: devFmtInt,
+        xLabelEvery: 1,
+        ariaLabel: "População estimada de Iguape e Cananéia por ano",
+      });
+      devSetStatus("dev-ibge", "ok", "Dados ao vivo — IBGE Agregados, tabela 6579");
+    } catch (err) {
+      devSetStatus("dev-ibge", "err", "Falha ao consultar a API do IBGE");
+      devRenderError("dev-ibge-body", "Não foi possível carregar os dados do IBGE agora (" + err.message + "). Verifique sua conexão e recarregue a página.");
+    }
+  }
+
+  async function devLoadMare() {
+    try {
+      devSetStatus("dev-mare", "loading", "Consultando marine-api.open-meteo.com…");
+      const results = await Promise.all(DEV_MARE_LOCS.map((loc) => devFetchMarine(loc)));
+      const times = results[0].hourly.time;
+      const series = DEV_MARE_LOCS.map((loc, i) => ({
+        name: loc.name,
+        color: loc.color,
+        points: times.map((t, idx) => ({
+          label: t.slice(8, 10) + "/" + t.slice(5, 7) + " " + t.slice(11, 13) + "h",
+          value: results[i].hourly.sea_level_height_msl[idx],
+        })),
+      }));
+      devRenderLineChart("dev-mare-body", {
+        series,
+        yFmt: devFmtM,
+        xLabelEvery: 6,
+        ariaLabel: "Nível do mar em Iguape e Cananéia de 27 a 29 de maio de 2026",
+      });
+      devSetStatus("dev-mare", "ok", "Dados ao vivo — Open-Meteo Marine (27–29/05/2026)");
+    } catch (err) {
+      devSetStatus("dev-mare", "err", "Falha ao consultar a API Open-Meteo");
+      devRenderError("dev-mare-body", "Não foi possível carregar os dados de maré agora (" + err.message + "). Verifique sua conexão e recarregue a página.");
+    }
+  }
+
+  function devUnlock() {
+    const codeInput = document.getElementById("dev-code-input");
+    const errorMsg = document.getElementById("dev-gate-error");
+    if (codeInput.value === DEV_CODE) {
+      document.getElementById("dev-gate").style.display = "none";
+      document.getElementById("dev-content").style.display = "block";
+      devLoadIBGE();
+      devLoadMare();
+    } else {
+      errorMsg.style.display = "block";
+      codeInput.value = "";
+      codeInput.focus();
+    }
+  }
+
+  function initDevMode() {
+    const btn = document.getElementById("btn-dev-unlock");
+    const input = document.getElementById("dev-code-input");
+    if (!btn || !input) return;
+    btn.addEventListener("click", devUnlock);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") devUnlock();
+    });
+  }
+
+  // -----------------------------------------------------------------
   // Bootstrap
   // -----------------------------------------------------------------
   function bootstrapPanel() {
     initNav();
     initCompareRunner();
+    initDevMode();
     loadOverview();
   }
 
