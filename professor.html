@@ -2606,19 +2606,29 @@ window.LagamarAPI.submissions = {
       tbody.innerHTML = '<tr><td colspan="6"><div class="teacher-empty"><span class="emoji">🌱</span>Nenhuma investigação criada ainda.</div></td></tr>';
       return;
     }
+    // Ficha "ativa" de cada grupo = a criada mais recentemente (é a que o
+    // aluno abre). As anteriores ficam guardadas e continuam visíveis aqui.
+    const latestByGroup = {};
+    all.forEach((inv) => {
+      const cur = latestByGroup[inv.group_id];
+      if (!cur || String(inv.created_at) > String(cur.created_at)) latestByGroup[inv.group_id] = inv;
+    });
+
     tbody.innerHTML = all
       .map((inv) => {
         const group = inv.groups;
         const className = group?.classes?.short_code || "—";
         const status = inv.submission_status || "rascunho";
-        return `<tr>
+        const isActive = latestByGroup[inv.group_id]?.id === inv.id;
+        return `<tr${isActive ? "" : ' style="opacity:0.7;"'}>
           <td class="group-cell"><strong>${escapeHtml(group?.display_name || "Grupo?")}</strong><span>${escapeHtml(className)}</span></td>
-          <td>${inv.analysis_round ? "Rodada " + inv.analysis_round : "—"}${inv.activity_number ? " · Ativ. " + inv.activity_number : ""}</td>
+          <td>${inv.analysis_round ? "Rodada " + inv.analysis_round : "—"}${inv.activity_number ? " · Ativ. " + inv.activity_number : ""}${isActive ? "" : '<br><span style="font-size:0.75rem;color:#8a7f66;">rodada anterior (arquivada)</span>'}</td>
           <td class="headline-cell">${inv.headline ? '"' + escapeHtml(inv.headline) + '"' : '<span style="color:#b5aa8c;">sem manchete</span>'}</td>
           <td><span class="submission-badge ${SUBMISSION_STATUS_CLASS[status]}">${SUBMISSION_STATUS_LABELS[status]}</span></td>
           <td>${fmtDate(inv.updated_at)}</td>
           <td style="display:flex; gap:6px;">
             <button class="row-action-btn" data-view-report="${inv.id}">Ver</button>
+            ${isActive ? `<button class="row-action-btn primary" data-new-round="${inv.id}" title="Abre uma ficha nova e em branco para o grupo; esta fica guardada">Nova rodada</button>` : ""}
             <button class="row-action-btn row-action-danger" data-remove-report="${inv.id}" data-group-name="${escapeHtml(group?.display_name || "Grupo?")}">Remover</button>
           </td>
         </tr>`;
@@ -2631,6 +2641,42 @@ window.LagamarAPI.submissions = {
     tbody.querySelectorAll("[data-remove-report]").forEach((btn) => {
       btn.addEventListener("click", () => confirmAndRemoveInvestigation(btn.dataset.removeReport, btn.dataset.groupName, loadOverview));
     });
+    tbody.querySelectorAll("[data-new-round]").forEach((btn) => {
+      btn.addEventListener("click", () => startNextRound(all.find((i) => i.id === btn.dataset.newRound), btn, loadOverview));
+    });
+  }
+
+  /** Abre a próxima rodada para um grupo: cria uma ficha nova e em branco.
+   *  A ficha atual NÃO é apagada nem alterada — continua aqui no painel,
+   *  com o relatório e a tabela. No aparelho do aluno aparece um aviso
+   *  "o professor abriu uma nova rodada" com um botão para abrir a ficha nova. */
+  async function startNextRound(inv, btn, onDone) {
+    if (!inv) return;
+    const groupName = inv.groups?.display_name || "grupo";
+    const className = inv.groups?.classes?.short_code || "";
+    const cur = Number(inv.analysis_round) || 0;
+    const next = cur > 0 && cur < 3 ? cur + 1 : null;
+    const statusWarning =
+      inv.submission_status === "aprovado"
+        ? ""
+        : "\n\nAtenção: a ficha atual deste grupo ainda NÃO foi aprovada. Ela continua guardada, mas o grupo deixará de editá-la.";
+    const ok = window.confirm(
+      `Abrir ${next ? "a Rodada " + next : "uma nova ficha"} para o ${groupName}${className ? " (" + className + ")" : ""}?\n\n` +
+        `O grupo passará a preencher uma ficha nova, em branco. A ficha atual${cur ? " (Rodada " + cur + ")" : ""} fica guardada e continua visível aqui no painel.` +
+        statusWarning
+    );
+    if (!ok) return;
+    if (btn) btn.disabled = true;
+    try {
+      const { error } = await window.sb.from("investigations").insert({ group_id: inv.group_id, analysis_round: next });
+      if (error) throw error;
+      toast(`${next ? "Rodada " + next : "Nova ficha"} aberta para o ${groupName}.`);
+      if (onDone) onDone();
+    } catch (e) {
+      console.error(e);
+      toast("Não foi possível abrir a nova rodada agora. Verifique a internet e tente novamente.");
+      if (btn) btn.disabled = false;
+    }
   }
 
   /** Remoção permanente de uma investigação (e tudo relacionado: dados,

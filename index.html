@@ -2870,6 +2870,20 @@ window.LagamarImport = (function () {
   let saveTimer = null;
   let hasPendingSave = false; // true entre o momento em que o usuário digita e o save no banco de fato completar
 
+  // --- Sincronização por campo (correção out/2026) ---------------------
+  // Antes, cada save enviava a ficha INTEIRA; com dois aparelhos abertos
+  // no mesmo grupo, o último a salvar apagava o que o outro tinha escrito.
+  // Agora guardamos o último valor confirmado no banco de cada coluna e
+  // enviamos só o que mudou neste aparelho.
+  let lastSynced = {};
+  let otherDeviceNoticeShown = false;
+  let newRoundNoticeShown = false;
+  // Linhas da tabela "Passando a Limpo": um timer POR LINHA (antes era um
+  // timer único, e editar outra linha em menos de 600ms descartava o save
+  // da linha anterior).
+  const pendingRowSaves = new Map(); // rowId -> timer
+  let rowSavesInFlight = 0;
+
   /** Carrega a investigação ativa do grupo (Supabase) para dentro do `state` local.
    *  Retorna { hasNewerLocalBackup } para o chamador decidir se oferece
    *  recuperação de um backup local mais recente que o banco (ex: o
@@ -2926,6 +2940,9 @@ window.LagamarImport = (function () {
     // no banco não chegou a confirmar sucesso (senão teria sido apagado).
     // Isso é sinal de dado potencialmente mais recente que o que acabamos
     // de carregar do banco.
+    lastSynced = {};
+    markSynced(buildFullPayload());
+
     const backup = getLocalBackup(inv.id);
     return { hasNewerLocalBackup: !!backup, backup };
   }
@@ -2934,7 +2951,8 @@ window.LagamarImport = (function () {
   /** Monta o payload de atualização a partir do state atual — usado tanto
    *  pelo save com debounce quanto pelo save imediato, para nunca haver
    *  divergência entre os dois caminhos. */
-  function buildUpdatePayload() {
+  function buildFullPayload(st = state) {
+    const state = st;
     return {
       analysis_round: state.analysisRound ? Number(state.analysisRound) : null,
       activity_number: state.activityNumber ? Number(state.activityNumber) : null,
@@ -2958,6 +2976,30 @@ window.LagamarImport = (function () {
       next_step: state.nextStep,
       current_step: state.currentStep,
     };
+  }
+
+  /** Só as colunas cujo valor local difere do último valor confirmado no banco. */
+  function buildUpdatePayload() {
+    const full = buildFullPayload();
+    const diff = {};
+    Object.keys(full).forEach((k) => {
+      if (JSON.stringify(full[k]) !== JSON.stringify(lastSynced[k])) diff[k] = full[k];
+    });
+    return diff;
+  }
+
+  function markSynced(payload) {
+    Object.keys(payload).forEach((k) => {
+      lastSynced[k] = JSON.parse(JSON.stringify(payload[k] === undefined ? null : payload[k]));
+    });
+  }
+
+  /** Envia ao banco só os campos alterados neste aparelho. */
+  async function saveDiff() {
+    const payload = buildUpdatePayload();
+    if (Object.keys(payload).length === 0) return;
+    await updateWithRetry(payload);
+    markSynced(payload);
   }
 
   /** Guarda uma cópia crua do state no localStorage deste navegador —
@@ -3037,7 +3079,7 @@ window.LagamarImport = (function () {
     saveTimer = setTimeout(async () => {
       if (!state.investigationId) return;
       try {
-        await updateWithRetry(buildUpdatePayload());
+        await saveDiff();
         hasPendingSave = false;
         clearSaveError();
         clearLocalBackup();
@@ -3060,7 +3102,7 @@ window.LagamarImport = (function () {
     hasPendingSave = true;
     saveLocalBackup();
     try {
-      await updateWithRetry(buildUpdatePayload());
+      await saveDiff();
       hasPendingSave = false;
       clearSaveError();
       clearLocalBackup();
@@ -3381,6 +3423,7 @@ window.LagamarImport = (function () {
     // (era a causa mais provável de "cenário não preenchido" reaparecer
     // mesmo depois de o aluno já ter escrito algo ali).
     if (hasPendingSave) await forceSaveImmediate();
+    await flushRowSaves();
 
     state.currentStep = Math.min(Math.max(n, 1), TOTAL_STEPS);
     document.querySelectorAll(".step-panel").forEach((p) => {
@@ -3613,22 +3656,13 @@ window.LagamarImport = (function () {
     document.getElementById("btn-add-column")?.addEventListener("click", addTableColumn);
 
     // Células de dados
-    let rowSaveTimer = null;
     wrap.querySelectorAll("input[data-row-id]").forEach((inp) => {
       inp.addEventListener("input", (e) => {
         const rowId = e.target.dataset.rowId;
         const col = Number(e.target.dataset.col);
         const row = state.tableRows.find((r) => r.id === rowId);
         if (row) row.cells[col] = e.target.value;
-
-        clearTimeout(rowSaveTimer);
-        rowSaveTimer = setTimeout(async () => {
-          try {
-            await window.LagamarAPI.tableRows.update(rowId, row.cells);
-          } catch (err) {
-            toast("Não foi possível salvar a linha. Verifique a internet.");
-          }
-        }, 600);
+        scheduleRowSave(rowId);
       });
     });
     wrap.querySelectorAll("[data-remove-row-id]").forEach((btn) => {
@@ -3643,6 +3677,203 @@ window.LagamarImport = (function () {
         }
       });
     });
+  }
+
+  // --- Salvamento da tabela, linha a linha -----------------------------
+  function scheduleRowSave(rowId) {
+    clearTimeout(pendingRowSaves.get(rowId));
+    const el = document.getElementById("save-indicator");
+    if (el) el.textContent = "Salvando…";
+    pendingRowSaves.set(rowId, setTimeout(() => saveRowNow(rowId), 600));
+  }
+
+  async function saveRowNow(rowId, attempt = 1) {
+    clearTimeout(pendingRowSaves.get(rowId));
+    pendingRowSaves.delete(rowId);
+    const row = state.tableRows.find((r) => r.id === rowId);
+    if (!row) return;
+    const cells = row.cells.slice();
+    rowSavesInFlight++;
+    try {
+      await window.LagamarAPI.tableRows.update(rowId, cells);
+      rowSavesInFlight--;
+      if (!hasPendingSave && pendingRowSaves.size === 0 && rowSavesInFlight === 0) {
+        clearSaveError();
+        const el = document.getElementById("save-indicator");
+        if (el) el.textContent = "Salvo na nuvem · " + new Date().toLocaleTimeString("pt-BR");
+      }
+    } catch (err) {
+      rowSavesInFlight--;
+      console.error("Erro ao salvar linha da tabela:", err);
+      if (attempt < 3) {
+        // Wi-Fi instável: tenta de novo em instantes, sem perder a edição
+        if (!pendingRowSaves.has(rowId)) {
+          pendingRowSaves.set(rowId, setTimeout(() => saveRowNow(rowId, attempt + 1), 800 * attempt));
+        }
+      } else {
+        showSaveError();
+        // mantém a linha marcada como pendente para a próxima tentativa
+        if (!pendingRowSaves.has(rowId)) {
+          pendingRowSaves.set(rowId, setTimeout(() => saveRowNow(rowId, 1), 5000));
+        }
+      }
+    }
+  }
+
+  async function flushRowSaves() {
+    const ids = [...pendingRowSaves.keys()];
+    await Promise.all(ids.map((id) => saveRowNow(id)));
+  }
+
+  // --- Sincronização entre aparelhos do mesmo grupo -----------------------
+  // A cada 15s busca a ficha no banco. Campos que mudaram lá (outro
+  // aparelho do grupo) e que NÃO estão sendo editados aqui são trazidos
+  // para esta tela. Também detecta quando o professor inicia uma nova rodada.
+  function remoteToStateFields(inv) {
+    return {
+      analysisRound: inv.analysis_round ? String(inv.analysis_round) : "",
+      activityNumber: inv.activity_number ? String(inv.activity_number) : "",
+      activityName: inv.activity_name || "",
+      scenario: inv.scenario || "",
+      taskDivision: inv.task_division || "",
+      materials: inv.materials || [],
+      materialsAccessible: inv.materials_accessible || "",
+      rawData: inv.raw_data || "",
+      questions: inv.questions || ["", "", ""],
+      consultancyNotes: inv.consultancy_notes || "",
+      patterns: inv.patterns || "",
+      observations: inv.observations || "",
+      hypothesis: inv.hypothesis || "",
+      supportingEvidence: inv.supporting_evidence || "",
+      limitingEvidence: inv.limiting_evidence || "",
+      analyticalLimits: inv.analytical_limits || "",
+      workBridge: inv.work_bridge || "",
+      headline: inv.headline || "",
+      newQuestion: inv.new_question || "",
+      nextStep: inv.next_step || "",
+    };
+  }
+
+  const COLUMN_TO_STATE = {
+    analysis_round: "analysisRound", activity_number: "activityNumber", activity_name: "activityName",
+    scenario: "scenario", task_division: "taskDivision", materials: "materials",
+    materials_accessible: "materialsAccessible", raw_data: "rawData", questions: "questions",
+    consultancy_notes: "consultancyNotes", patterns: "patterns", observations: "observations",
+    hypothesis: "hypothesis", supporting_evidence: "supportingEvidence", limiting_evidence: "limitingEvidence",
+    analytical_limits: "analyticalLimits", work_bridge: "workBridge", headline: "headline",
+    new_question: "newQuestion", next_step: "nextStep",
+  };
+
+  function applyRemoteFieldToForm(stateKey) {
+    const active = document.activeElement;
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && el !== active) el.value = val ?? "";
+    };
+    if (stateKey === "questions") {
+      set("f-question1", state.questions[0]);
+      set("f-question2", state.questions[1]);
+      set("f-question3", state.questions[2]);
+    } else if (stateKey === "materials" || stateKey === "materialsAccessible") {
+      hydrateStep2();
+    } else {
+      set("f-" + stateKey, state[stateKey]);
+    }
+  }
+
+  function showOtherDeviceNotice() {
+    if (otherDeviceNoticeShown) return;
+    otherDeviceNoticeShown = true;
+    const banner = document.createElement("div");
+    banner.className = "backup-recovery-banner";
+    banner.innerHTML = `
+      <span>👥 Este grupo também está aberto em outro aparelho. As alterações de lá aparecem aqui automaticamente — só evitem escrever no <strong>mesmo campo</strong> ao mesmo tempo.</span>
+      <div class="backup-recovery-actions"><button class="icon-btn" type="button">Entendi</button></div>`;
+    banner.querySelector("button").addEventListener("click", () => banner.remove());
+    document.body.prepend(banner);
+  }
+
+  function showNewRoundNotice() {
+    if (newRoundNoticeShown) return;
+    newRoundNoticeShown = true;
+    const banner = document.createElement("div");
+    banner.className = "backup-recovery-banner";
+    banner.innerHTML = `
+      <span>🆕 O professor abriu uma <strong>nova rodada</strong> para o seu grupo. A ficha atual já está guardada.</span>
+      <div class="backup-recovery-actions"><button class="btn-secondary" type="button">Abrir a nova ficha</button></div>`;
+    banner.querySelector("button").addEventListener("click", async () => {
+      if (hasPendingSave) await forceSaveImmediate();
+      await flushRowSaves();
+      location.reload();
+    });
+    document.body.prepend(banner);
+  }
+
+  let remotePullRunning = false;
+  async function pullRemoteChanges() {
+    if (!state.investigationId || !state.groupId || document.hidden || remotePullRunning) return;
+    remotePullRunning = true;
+    try {
+      const { data: latest } = await window.sb
+        .from("investigations")
+        .select("id")
+        .eq("group_id", state.groupId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latest && latest.id !== state.investigationId) showNewRoundNotice();
+
+      const { data: inv, error } = await window.sb
+        .from("investigations")
+        .select("*")
+        .eq("id", state.investigationId)
+        .maybeSingle();
+      if (error || !inv) return;
+
+      let changedByOther = false;
+      const remoteState = Object.assign(defaultState(), remoteToStateFields(inv));
+      const remotePayload = buildFullPayload(remoteState);
+      const localPayload = buildFullPayload();
+      Object.keys(COLUMN_TO_STATE).forEach((col) => {
+        const remoteJson = JSON.stringify(remotePayload[col]);
+        if (remoteJson === JSON.stringify(lastSynced[col])) return; // nada mudou no banco
+        const localDirty = JSON.stringify(localPayload[col]) !== JSON.stringify(lastSynced[col]);
+        if (localDirty && JSON.stringify(localPayload[col]) !== remoteJson) return; // este aparelho está editando: o save local vai prevalecer
+        const key = COLUMN_TO_STATE[col];
+        state[key] = JSON.parse(JSON.stringify(remoteState[key]));
+        lastSynced[col] = JSON.parse(remoteJson);
+        if (!localDirty) {
+          applyRemoteFieldToForm(key);
+          changedByOther = true;
+        }
+      });
+
+      // Tabela "Passando a Limpo"
+      const tableFocused = document.activeElement && document.activeElement.closest && document.activeElement.closest("#editable-table-wrap");
+      if (pendingRowSaves.size === 0 && rowSavesInFlight === 0 && !tableFocused) {
+        const rows = await window.LagamarAPI.tableRows.listForInvestigation(state.investigationId);
+        const remoteRows = rows.map((r) => ({ id: r.id, cells: r.cells }));
+        const remoteHeaders = inv.table_headers && inv.table_headers.length ? inv.table_headers : state.tableHeaders;
+        if (
+          JSON.stringify(remoteRows) !== JSON.stringify(state.tableRows) ||
+          JSON.stringify(remoteHeaders) !== JSON.stringify(state.tableHeaders)
+        ) {
+          state.tableRows = remoteRows;
+          state.tableHeaders = remoteHeaders;
+          renderEditableTable();
+          changedByOther = true;
+        }
+      }
+
+      if (changedByOther) {
+        updateTopbarMeta();
+        showOtherDeviceNotice();
+      }
+    } catch (e) {
+      console.warn("Sincronização com outros aparelhos falhou (tentará de novo):", e);
+    } finally {
+      remotePullRunning = false;
+    }
   }
 
   function escapeHtml(s) {
@@ -3822,7 +4053,7 @@ window.LagamarImport = (function () {
       });
     });
 
-    let rowSaveTimer = null;
+    const pointSaveTimers = {};
     contentEl.querySelectorAll("#math-chart-rows tr").forEach((row) => {
       const id = row.dataset.pointId;
       const labelInput = row.querySelector(".math-point-label");
@@ -3830,8 +4061,8 @@ window.LagamarImport = (function () {
       const unitInput = row.querySelector(".math-point-unit");
 
       const scheduleSave = () => {
-        clearTimeout(rowSaveTimer);
-        rowSaveTimer = setTimeout(async () => {
+        clearTimeout(pointSaveTimers[id]);
+        pointSaveTimers[id] = setTimeout(async () => {
           const point = mathChartDataPoints.find((p) => p.id === id);
           if (!point) return;
           point.variable_name = labelInput.value;
@@ -4779,8 +5010,21 @@ ${state.evidenceLog.map((ev, i) => `${i + 1}. [${ev.panel}] ${ev.reference} — 
     // navegar para fora enquanto ainda há uma edição não confirmada no
     // banco (ex: digitou e fechou antes dos 600ms do debounce), avisa
     // com a confirmação nativa do navegador.
+    // Chromebook fechado / aba trocada: salva na hora o que estiver pendente.
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        if (hasPendingSave) forceSaveImmediate();
+        flushRowSaves();
+      } else {
+        pullRemoteChanges();
+      }
+    });
+
+    // Sincronização com outros aparelhos do mesmo grupo + aviso de nova rodada.
+    setInterval(pullRemoteChanges, 15000);
+
     window.addEventListener("beforeunload", (e) => {
-      if (hasPendingSave) {
+      if (hasPendingSave || pendingRowSaves.size > 0 || rowSavesInFlight > 0) {
         e.preventDefault();
         e.returnValue = "";
         return "";
